@@ -1,5 +1,5 @@
 import type { Evidence, SignalCtaAction } from '../../types/evidence';
-import { useCreateThreadFromPrompt } from '../../hooks/useCreateThreadFromPrompt';
+import { useCreateJobFromPrompt } from '../../hooks/useCreateJobFromPrompt';
 import Button from '../ui/Button';
 import Facepile from '../ui/Facepile';
 import LogoPile from '../ui/LogoPile';
@@ -24,7 +24,7 @@ interface Props {
 
 export default function SignalDetail({ evidence }: Props) {
   const card = evidence.signalCard;
-  const createFromPrompt = useCreateThreadFromPrompt();
+  const createFromPrompt = useCreateJobFromPrompt();
 
   if (!card) {
     return (

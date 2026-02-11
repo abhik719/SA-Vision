@@ -1,31 +1,57 @@
-import type { JobStatus, JobType } from './common';
+import type { JobStatus, JobType, JobKind, Scope } from './common';
+import type { Message, NextSuggestion, AskSuggestion } from './thread';
 
 export interface JobSchedule {
+  is_active: boolean;
   frequency: 'daily' | 'weekly' | 'monthly';
-  dayOfWeek?: number;
-  timeOfDay?: string;
-  onlyOnSignalChange?: boolean;
+  dayOfWeek?: string;
+  time?: string;
+  next_run_at?: string;
+  last_run_at?: string;
+  last_run_summary?: string;
+}
+
+export interface LinkedContext {
+  source_job_id?: string;
+  parent_job_id?: string;
 }
 
 export interface Job {
   id: string;
-  originThreadId: string;
+  kind: JobKind;
   type: JobType;
   title: string;
   status: JobStatus;
+  has_unread_results: boolean;
   createdAt: string;
   updatedAt: string;
-  /** When the user first viewed completed results */
-  viewedAt?: string;
-  /** Soft-archived by user */
-  archived?: boolean;
+  last_viewed_at: string | null;
+  expires_at: string | null;
+  archived_at: string | null;
+
   /** Recurring schedule */
-  schedule?: JobSchedule;
-  /** Message ID in origin thread where this job was created */
-  createdFromMessageId?: string;
+  schedule: JobSchedule | null;
+  /** Link to parent/source job */
+  linked_context: LinkedContext | null;
+
+  /** Evidence pane ID */
+  evidenceId?: string;
+
   /** Human-readable "Scope → Outcome" subtitle */
   scopeOutput?: string;
-  inputs: {
+
+  // ── Chat / conversation fields (absorbed from Thread) ──
+  messages: Message[];
+  decisionChips?: string[];
+  scope?: Scope;
+  scopeLabel?: string;
+  nextSuggestions?: NextSuggestion[];
+  askSuggestions?: AskSuggestion[];
+  /** List of child job IDs spawned from this conversation */
+  spawnedJobIds?: string[];
+
+  // ── Job execution fields ──
+  inputs?: {
     accountIds?: string[];
     personas?: string[];
     seniority?: string[];
@@ -44,7 +70,6 @@ export interface Job {
       draftsApproved?: number;
     };
   };
-  evidenceId?: string;
   /** Progress simulation stages */
   progressStages?: string[];
   currentStage?: number;

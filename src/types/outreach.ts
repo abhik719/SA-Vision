@@ -1,5 +1,5 @@
-export type OutreachChannel = 'CONNECT_REQUEST' | 'INMAIL' | 'LINKEDIN_MESSAGE' | 'EMAIL';
-export type StepCondition = 'IF_CONNECT_ACCEPTED' | 'IF_NO_REPLY' | null;
+export type OutreachChannel = 'CONNECT_REQUEST' | 'INMAIL' | 'LINKEDIN_MESSAGE' | 'EMAIL' | 'EMAIL_FOLLOWUP' | 'NURTURE';
+export type StepCondition = 'IF_CONNECT_ACCEPTED' | 'IF_NOT_ACCEPTED' | 'IF_NO_REPLY' | 'IF_REPLY' | 'ALWAYS' | null;
 
 export interface OutreachStep {
   id: string;
@@ -8,6 +8,10 @@ export interface OutreachStep {
   condition: StepCondition;
   requiresApproval: boolean;
   addToCadence?: boolean;
+  /** Parent step ID for branching — null means root step */
+  parentStepId?: string | null;
+  /** Optional custom label (e.g., "Follow-up email", "Final follow-up") */
+  label?: string;
 }
 
 export interface OutreachGuardrails {

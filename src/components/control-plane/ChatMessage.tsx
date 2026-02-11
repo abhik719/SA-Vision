@@ -1,11 +1,13 @@
 import type { Message } from '../../types/thread';
 import { useAppStore } from '../../store/useAppStore';
+import { useJobStore } from '../../store/useJobStore';
 import JobProposalCard from '../cards/JobProposalCard';
 import JobResultCard from '../cards/JobResultCard';
 import DecisionChips from '../cards/DecisionChips';
 import SignalFeedbackCard from '../cards/SignalFeedbackCard';
 import { ArrowUpRight } from 'lucide-react';
 import clsx from 'clsx';
+import { processSellerMessage } from '../../flows/engine';
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-US', {
@@ -16,12 +18,27 @@ function formatTime(iso: string): string {
 
 interface Props {
   message: Message;
-  threadId: string;
+  jobId: string;
+  /** Whether this is the last message from an agent (chips are interactive) */
+  isLastAgentMessage?: boolean;
 }
 
-export default function ChatMessage({ message, threadId }: Props) {
+export default function ChatMessage({ message, jobId, isLastAgentMessage }: Props) {
   const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
+  const addMessage = useJobStore((s) => s.addMessage);
   const isSeller = message.role === 'seller';
+
+  const handleChipClick = (chip: string) => {
+    // Add user message
+    addMessage(jobId, {
+      id: `msg_${Date.now()}`,
+      role: 'seller',
+      timestamp: new Date().toISOString(),
+      content: chip,
+    });
+    // Trigger flow engine
+    processSellerMessage(jobId, chip);
+  };
 
   return (
     <div
@@ -43,7 +60,7 @@ export default function ChatMessage({ message, threadId }: Props) {
       {/* Message bubble */}
       <div
         className={clsx(
-          'max-w-[90%] rounded-ds-card px-[12px] py-[8px] font-body text-ds-base leading-relaxed',
+          'max-w-[90%] rounded-ds-card px-[12px] py-[8px] font-body text-ds-base leading-relaxed whitespace-pre-line',
           isSeller
             ? 'bg-li-blue text-white'
             : 'bg-li-bg-secondary text-li-text-primary'
@@ -52,7 +69,7 @@ export default function ChatMessage({ message, threadId }: Props) {
         {message.content}
       </div>
 
-      {/* Evidence links — explicit "Open in Evidence pane" pattern */}
+      {/* Evidence links */}
       {message.attachments?.map((att) => (
         <button
           key={att.evidenceId}
@@ -68,7 +85,7 @@ export default function ChatMessage({ message, threadId }: Props) {
       {message.cardType === 'JOB_PROPOSAL' && message.cardData && (
         <JobProposalCard
           data={message.cardData as import('../../types/thread').JobProposalCardData}
-          threadId={threadId}
+          jobId={jobId}
         />
       )}
       {message.cardType === 'JOB_RESULT' && message.cardData && (
@@ -82,8 +99,28 @@ export default function ChatMessage({ message, threadId }: Props) {
       {message.cardType === 'SIGNAL_FEEDBACK' && message.cardData && (
         <SignalFeedbackCard
           data={message.cardData as import('../../types/thread').SignalFeedbackCardData}
-          threadId={threadId}
+          jobId={jobId}
         />
+      )}
+
+      {/* Suggested reply chips */}
+      {message.suggestedChips && message.suggestedChips.length > 0 && (
+        <div className="flex flex-wrap gap-[6px] mt-[2px] max-w-[90%]">
+          {message.suggestedChips.map((chip) => (
+            <button
+              key={chip}
+              onClick={() => isLastAgentMessage && handleChipClick(chip)}
+              className={clsx(
+                'rounded-[16px] border px-[10px] py-[3px] font-body text-[11px] transition-colors',
+                isLastAgentMessage
+                  ? 'border-li-blue/40 bg-white text-li-blue hover:bg-li-blue hover:text-white cursor-pointer'
+                  : 'border-li-border-standard bg-li-bg-secondary text-li-text-disabled cursor-default'
+              )}
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
       )}
     </div>
   );

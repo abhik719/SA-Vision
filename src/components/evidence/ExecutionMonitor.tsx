@@ -3,7 +3,6 @@ import { useOutreachStore } from '../../store/useOutreachStore';
 import { useJobStore } from '../../store/useJobStore';
 import { useEvidenceStore } from '../../store/useEvidenceStore';
 import { useAppStore } from '../../store/useAppStore';
-import { useThreadStore } from '../../store/useThreadStore';
 import type { Evidence } from '../../types/evidence';
 import type { ExecStatus } from '../../types/outreach';
 import {
@@ -58,9 +57,9 @@ export default function ExecutionMonitor({ evidence }: Props) {
   const setJobStatus = useJobStore((s) => s.setJobStatus);
   const updateEvidence = useEvidenceStore((s) => s.updateEvidence);
   const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
-  const addMessage = useThreadStore((s) => s.addMessage);
+  const addMessage = useJobStore((s) => s.addMessage);
 
-  const [showSchedule, setShowSchedule] = useState(!job || job.status === 'READY');
+  const [showSchedule, setShowSchedule] = useState(!job || job.status === 'COMPLETED');
   const [maxPerDay, setMaxPerDay] = useState(20);
   const [startTime, setStartTime] = useState('now');
   const simulationRan = useRef(false);
@@ -169,15 +168,15 @@ export default function ExecutionMonitor({ evidence }: Props) {
     // Agent suggestion in thread
     delay += 800;
     setTimeout(() => {
-      const threadId = evidence.context?.threadId;
-      if (threadId) {
-        addMessage(threadId, {
+      const parentJobId = evidence.context?.jobId;
+      if (parentJobId) {
+        addMessage(parentJobId, {
           id: `msg_exec_update_${Date.now()}`,
           role: 'agent',
           timestamp: new Date().toISOString(),
           content: `**Outreach update:** 3 connects accepted, 1 reply received. Want me to draft follow-up messages for the accepted connections?`,
           cardType: 'DECISION_CHIPS',
-          cardData: ['Yes — draft follow-ups', 'Skip for now', 'Show me the full status'],
+          cardData: ['Yes \u2014 draft follow-ups', 'Skip for now', 'Show me the full status'],
         });
       }
     }, delay);
@@ -200,9 +199,9 @@ export default function ExecutionMonitor({ evidence }: Props) {
     setShowSchedule(false);
     setJobStatus(jobId, 'RUNNING');
 
-    const threadId = evidence.context?.threadId;
-    if (threadId) {
-      addMessage(threadId, {
+    const parentJobId = evidence.context?.jobId;
+    if (parentJobId) {
+      addMessage(parentJobId, {
         id: `msg_exec_start_${Date.now()}`,
         role: 'agent',
         timestamp: new Date().toISOString(),

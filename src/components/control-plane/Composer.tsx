@@ -5,7 +5,7 @@ interface Props {
   onSend: (text: string) => void;
 }
 
-export default function Composer({ onSend }: Props) {
+export function Composer({ onSend }: Props) {
   const [text, setText] = useState('');
 
   const handleSend = () => {

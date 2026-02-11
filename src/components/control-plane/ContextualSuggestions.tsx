@@ -1,8 +1,8 @@
-import type { Thread } from '../../types/thread';
-import { MessageCircle } from 'lucide-react';
+import type { Job } from '../../types/job';
+import { Zap, MessageCircle } from 'lucide-react';
 
 interface Props {
-  thread: Thread;
+  job: Job;
   onSend: (text: string) => void;
 }
 
@@ -13,10 +13,20 @@ const FALLBACK_CHIPS = [
   'Find leads for top accounts',
 ];
 
-export default function ContextualSuggestions({ thread, onSend }: Props) {
-  const askItems = thread.askSuggestions || [];
+export function ContextualSuggestions({ job, onSend }: Props) {
+  const nextItems = job.nextSuggestions || [];
+  const askItems = job.askSuggestions || [];
 
-  if (askItems.length === 0) {
+  // If *any* message in this job has inline suggestedChips, this is a chip-driven
+  // conversation — hide the bottom fallback suggestions entirely to avoid clutter.
+  const hasInlineChips = job.messages.some(
+    (m) => m.suggestedChips && m.suggestedChips.length > 0
+  );
+  if (hasInlineChips) {
+    return null;
+  }
+
+  if (nextItems.length === 0 && askItems.length === 0) {
     return (
       <div className="flex flex-wrap gap-[6px] px-[16px] pb-[8px]">
         {FALLBACK_CHIPS.map((chip) => (
@@ -34,22 +44,52 @@ export default function ContextualSuggestions({ thread, onSend }: Props) {
 
   return (
     <div className="flex flex-col gap-[4px] px-[16px] pb-[8px]">
-      {/* Follow-up questions (max 2) */}
-      <span className="font-body text-[10px] text-li-text-disabled">
-        Follow-up questions
-      </span>
-      {askItems.slice(0, 2).map((item) => (
-        <button
-          key={item.id}
-          onClick={() => onSend(item.question)}
-          className="group flex items-center gap-[6px] rounded-[4px] px-[6px] py-[4px] text-left transition-colors hover:bg-li-bg-hover"
-        >
-          <MessageCircle size={10} className="shrink-0 text-li-text-disabled group-hover:text-li-text-tertiary" />
-          <span className="truncate font-body text-[11px] leading-snug text-li-text-tertiary group-hover:text-li-text-secondary">
-            {item.question}
+      {/* Next best actions */}
+      {nextItems.length > 0 && (
+        <>
+          <span className="font-body text-[10px] text-li-text-disabled">
+            Next best actions
           </span>
-        </button>
-      ))}
+          {nextItems.slice(0, 2).map((item) => (
+            <button
+              key={item.id}
+              onClick={() => onSend(item.prompt || item.title)}
+              className="group flex items-center gap-[6px] rounded-[4px] px-[6px] py-[4px] text-left transition-colors hover:bg-li-bg-hover"
+            >
+              <Zap size={10} className="shrink-0 text-li-text-disabled group-hover:text-li-blue" />
+              <span className="truncate font-body text-[11px] leading-snug text-li-text-tertiary group-hover:text-li-text-secondary">
+                {item.title}
+              </span>
+              <span className="ml-auto shrink-0 rounded-[3px] bg-li-tag-bg px-[5px] py-[1px] font-body text-[9px] font-medium text-li-text-tertiary group-hover:bg-li-blue/10 group-hover:text-li-blue">
+                {item.cta}
+              </span>
+            </button>
+          ))}
+        </>
+      )}
+
+      {/* Follow-up questions */}
+      {askItems.length > 0 && (
+        <>
+          <span className="mt-[2px] font-body text-[10px] text-li-text-disabled">
+            Follow-up questions
+          </span>
+          {askItems.slice(0, 2).map((item) => (
+            <button
+              key={item.id}
+              onClick={() => onSend(item.question)}
+              className="group flex items-center gap-[6px] rounded-[4px] px-[6px] py-[4px] text-left transition-colors hover:bg-li-bg-hover"
+            >
+              <MessageCircle size={10} className="shrink-0 text-li-text-disabled group-hover:text-li-text-tertiary" />
+              <span className="truncate font-body text-[11px] leading-snug text-li-text-tertiary group-hover:text-li-text-secondary">
+                {item.question}
+              </span>
+            </button>
+          ))}
+        </>
+      )}
     </div>
   );
 }
+
+export default ContextualSuggestions;

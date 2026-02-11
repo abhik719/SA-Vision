@@ -2,23 +2,23 @@ import { useState } from 'react';
 import type { Evidence } from '../../types/evidence';
 import type { SignalFeedbackCardData, SignalFeedbackOption } from '../../types/thread';
 import { useAppStore } from '../../store/useAppStore';
-import { useThreadStore } from '../../store/useThreadStore';
+import { useJobStore } from '../../store/useJobStore';
 import AgentHomeInput from './AgentHomeInput';
 import StartPointChips from './StartPointChips';
 import SectionHeader from './SectionHeader';
 import SignalCardComponent from './SignalCardComponent';
 import JobTileComponent from './JobTileComponent';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
+import { processSellerMessage } from '../../flows/engine';
 
 interface Props {
   evidence: Evidence;
 }
 
 export default function AgentHome({ evidence }: Props) {
-  const setActiveTab = useAppStore((s) => s.setActiveTab);
-  const selectThread = useAppStore((s) => s.selectThread);
-  const createThread = useThreadStore((s) => s.createThread);
-  const addMessage = useThreadStore((s) => s.addMessage);
+  const selectJob = useAppStore((s) => s.selectJob);
+  const createJob = useJobStore((s) => s.createJob);
+  const addMessage = useJobStore((s) => s.addMessage);
   const [feedbackGiven, setFeedbackGiven] = useState<'up' | 'down' | null>(null);
 
   const placeholders = evidence.inputPlaceholders || [];
@@ -35,71 +35,22 @@ export default function AgentHome({ evidence }: Props) {
     setFeedbackGiven(sentiment);
 
     const isDown = sentiment === 'down';
-    const threadTitle = isDown
+    const jobTitle = isDown
       ? 'Adjust my signal preferences'
       : 'I want better signals';
 
-    // Build section-level feedback options
     const options: SignalFeedbackOption[] = isDown
       ? [
-          {
-            id: 'suppress_intent',
-            label: 'Show fewer intent/topic signals',
-            description: 'Reduce topic-based intent spikes like CRM modernization, pipeline analytics, etc.',
-            scope: 'category',
-            icon: 'tag',
-          },
-          {
-            id: 'suppress_dm_changes',
-            label: 'Show fewer decision-maker changes',
-            description: 'Reduce new hire / departure alerts for decision makers.',
-            scope: 'category',
-            icon: 'building',
-          },
-          {
-            id: 'suppress_low_confidence',
-            label: 'Only show high-confidence signals',
-            description: 'Filter out medium/low confidence signals and only surface strong indicators.',
-            scope: 'all',
-            icon: 'bell-off',
-          },
-          {
-            id: 'suppress_stale',
-            label: 'Only show signals from the last 48 hours',
-            description: 'Remove older signals and keep only the freshest activity.',
-            scope: 'all',
-            icon: 'globe',
-          },
+          { id: 'suppress_intent', label: 'Show fewer intent/topic signals', description: 'Reduce topic-based intent spikes.', scope: 'category', icon: 'tag' },
+          { id: 'suppress_dm_changes', label: 'Show fewer decision-maker changes', description: 'Reduce new hire / departure alerts.', scope: 'category', icon: 'building' },
+          { id: 'suppress_low_confidence', label: 'Only show high-confidence signals', description: 'Filter out medium/low confidence signals.', scope: 'all', icon: 'bell-off' },
+          { id: 'suppress_stale', label: 'Only show signals from the last 48 hours', description: 'Remove older signals.', scope: 'all', icon: 'globe' },
         ]
       : [
-          {
-            id: 'boost_intent',
-            label: 'More intent/topic signals',
-            description: 'Prioritize buying intent and topic spike signals in my feed.',
-            scope: 'category',
-            icon: 'star',
-          },
-          {
-            id: 'boost_people',
-            label: 'More people movement signals',
-            description: 'Prioritize new hires, departures, and role changes at my accounts.',
-            scope: 'category',
-            icon: 'building',
-          },
-          {
-            id: 'boost_engagement',
-            label: 'More engagement signals',
-            description: 'Show me when contacts engage with our content, campaigns, or pricing pages.',
-            scope: 'category',
-            icon: 'bell',
-          },
-          {
-            id: 'boost_pipeline_risk',
-            label: 'More pipeline risk signals',
-            description: 'Surface coverage gaps, stalled deals, and champion risk earlier.',
-            scope: 'category',
-            icon: 'tag',
-          },
+          { id: 'boost_intent', label: 'More intent/topic signals', description: 'Prioritize buying intent and topic spike signals.', scope: 'category', icon: 'star' },
+          { id: 'boost_people', label: 'More people movement signals', description: 'Prioritize new hires, departures, and role changes.', scope: 'category', icon: 'building' },
+          { id: 'boost_engagement', label: 'More engagement signals', description: 'Show engagement with content, campaigns, or pricing pages.', scope: 'category', icon: 'bell' },
+          { id: 'boost_pipeline_risk', label: 'More pipeline risk signals', description: 'Surface coverage gaps, stalled deals, and champion risk.', scope: 'category', icon: 'tag' },
         ];
 
     const feedbackCardData: SignalFeedbackCardData = {
@@ -114,22 +65,22 @@ export default function AgentHome({ evidence }: Props) {
       ? 'I want to adjust which signals show up in my feed. Some of these aren\'t useful.'
       : 'These signals are helpful. I want to see more like this and tune my preferences.';
 
-    const threadId = createThread({
-      title: threadTitle,
-      type: 'MIXED',
+    const jobId = createJob({
+      title: jobTitle,
+      type: 'CONVERSATION',
+      kind: 'tracked',
       seedMessage: seedText,
       scope: { territory: 'West SMB' },
     });
 
-    selectThread(threadId);
+    selectJob(jobId);
 
-    // Agent responds with smart options after a small delay
     setTimeout(() => {
       const agentText = isDown
-        ? 'I hear you — let\'s tune your signal feed so it surfaces only what matters. Which types would you like to dial down?'
+        ? 'I hear you \u2014 let\u2019s tune your signal feed so it surfaces only what matters. Which types would you like to dial down?'
         : 'Glad these are useful! Let me help you get even more of the good stuff. What types of signals matter most to you?';
 
-      addMessage(threadId, {
+      addMessage(jobId, {
         id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
         role: 'agent',
         timestamp: new Date().toISOString(),
@@ -140,7 +91,6 @@ export default function AgentHome({ evidence }: Props) {
     }, 600);
   };
 
-  // Thumbs UI for the section header
   const signalSectionActions = (
     <div className="flex items-center gap-[2px]">
       <button
@@ -153,7 +103,7 @@ export default function AgentHome({ evidence }: Props) {
               ? 'text-li-text-disabled'
               : 'text-li-text-disabled hover:bg-li-bg-hover hover:text-li-text-secondary'
         }`}
-        title="These signals are useful — show me more"
+        title="These signals are useful \u2014 show me more"
       >
         <ThumbsUp size={13} />
       </button>
@@ -167,7 +117,7 @@ export default function AgentHome({ evidence }: Props) {
               ? 'text-li-text-disabled'
               : 'text-li-text-disabled hover:bg-li-bg-hover hover:text-li-text-secondary'
         }`}
-        title="These signals aren't useful — adjust"
+        title="These signals aren't useful \u2014 adjust"
       >
         <ThumbsDown size={13} />
       </button>
@@ -225,7 +175,6 @@ export default function AgentHome({ evidence }: Props) {
               ))}
               {hasMore && (
                 <button
-                  onClick={() => setActiveTab('JOBS')}
                   className="self-start font-body text-ds-small font-semibold text-li-blue hover:underline"
                 >
                   See all jobs

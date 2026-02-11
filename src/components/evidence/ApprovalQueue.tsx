@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import type { Evidence, ApprovalItem } from '../../types/evidence';
 import { useEvidenceStore } from '../../store/useEvidenceStore';
 import { useJobStore } from '../../store/useJobStore';
-import { useThreadStore } from '../../store/useThreadStore';
 import EvidenceHeader from './EvidenceHeader';
 import Button from '../ui/Button';
 import { getLeadAvatar } from '../../data/leadAvatars';
@@ -36,8 +35,7 @@ export default function ApprovalQueue({ evidence, hideHeader }: Props) {
   const [selectedTalkingPoints, setSelectedTalkingPoints] = useState<Set<number>>(new Set());
   const updateEvidence = useEvidenceStore((s) => s.updateEvidence);
   const setJobStatus = useJobStore((s) => s.setJobStatus);
-  const addMessage = useThreadStore((s) => s.addMessage);
-  const updateMiniOutcome = useThreadStore((s) => s.updateMiniOutcome);
+  const addMessageToJob = useJobStore((s) => s.addMessage);
 
   const items = useMemo(() => evidence.items || [], [evidence.items]);
   const selectedDraft = items.find((i) => i.draftId === selectedDraftId);
@@ -121,7 +119,9 @@ export default function ApprovalQueue({ evidence, hideHeader }: Props) {
       const { jobsById } = useJobStore.getState();
       const job = jobsById[evidence.context.jobId];
       if (job) {
-        addMessage(job.originThreadId, {
+        // Post result to parent job (or to the job itself)
+        const parentJobId = job.linked_context?.parent_job_id || job.id;
+        addMessageToJob(parentJobId, {
           id: `msg_${Date.now()}`,
           role: 'agent',
           timestamp: new Date().toISOString(),
@@ -137,7 +137,6 @@ export default function ApprovalQueue({ evidence, hideHeader }: Props) {
             ],
           },
         });
-        updateMiniOutcome(job.originThreadId, `${approved} drafts approved`);
       }
     }
   };

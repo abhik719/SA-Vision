@@ -38,6 +38,16 @@ export const LEAD_AVATARS: Record<string, string> = {
   ld_916: avatarSamir,        // Chris Taylor (M)
   ld_917: avatarLauren,       // Amanda Chen (F)
   ld_918: avatarMiguel,       // Brian Moore (M)
+
+  // Outreach leads (lead_01 through lead_08)
+  lead_01: avatarMiguel,      // Marcus Rivera (M)
+  lead_02: avatarJenna,       // Emily Watson (F)
+  lead_03: avatarLauren,      // Sarah Chen (F)
+  lead_04: avatarSamir,       // James Park (M)
+  lead_05: avatarPriya,       // Priya Sharma (F)
+  lead_06: avatarMiguel,      // David Kim (M)
+  lead_07: avatarAlicia,      // Rachel Foster (F)
+  lead_08: avatarSamir,       // Tom Baker (M)
 };
 
 /** Helper to resolve an avatar URL for a given lead ID */

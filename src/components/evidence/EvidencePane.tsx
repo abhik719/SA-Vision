@@ -1,7 +1,6 @@
 import { useAppStore } from '../../store/useAppStore';
 import { useEvidenceStore } from '../../store/useEvidenceStore';
 import { useJobStore } from '../../store/useJobStore';
-import { useThreadStore } from '../../store/useThreadStore';
 import EvidenceBreadcrumb from './EvidenceBreadcrumb';
 import AgentHome from './AgentHome';
 import AccountsRankedTable from './AccountsRankedTable';
@@ -17,16 +16,17 @@ import OutreachPlanBuilder from './OutreachPlanBuilder';
 import OutreachDraftReview from './OutreachDraftReview';
 import ExecutionMonitor from './ExecutionMonitor';
 import EvidenceJobHeader from './EvidenceJobHeader';
-import EvidenceThreadHeader from './EvidenceThreadHeader';
+import ReasoningAnimation from './ReasoningAnimation';
+import AccountsPrioritized from './AccountsPrioritized';
+import LeadsDiscovery from './LeadsDiscovery';
+import LeadsFinalList from './LeadsFinalList';
 
 export default function EvidencePane() {
   const currentEvidenceId = useAppStore((s) => s.currentEvidenceId);
   const selectedView = useAppStore((s) => s.selectedView);
   const selectedJobId = useAppStore((s) => s.selectedJobId);
-  const selectedThreadId = useAppStore((s) => s.selectedThreadId);
   const evidenceById = useEvidenceStore((s) => s.evidenceById);
   const jobsById = useJobStore((s) => s.jobsById);
-  const threadsById = useThreadStore((s) => s.threadsById);
 
   // Resolve evidence: current evidence ID, or from selected job
   let evidence = currentEvidenceId ? evidenceById[currentEvidenceId] : null;
@@ -39,18 +39,14 @@ export default function EvidencePane() {
     }
   }
 
-  // Resolve job and thread for header rendering
+  // Resolve job for header rendering
   const job = selectedJobId ? jobsById[selectedJobId] : null;
-  const thread = selectedThreadId ? threadsById[selectedThreadId] : null;
 
   // Determine context label for breadcrumb
   let contextLabel = '';
   let showBreadcrumb = false;
 
-  if (selectedView === 'THREAD' && selectedThreadId) {
-    contextLabel = thread?.title || 'Thread';
-    showBreadcrumb = true;
-  } else if (selectedView === 'JOB' && selectedJobId) {
+  if (selectedView === 'JOB' && selectedJobId) {
     contextLabel = job?.title || 'Job';
     showBreadcrumb = true;
   } else if (evidence && evidence.type !== 'AGENT_HOME') {
@@ -59,7 +55,7 @@ export default function EvidencePane() {
   }
 
   // If job is selected and status is RUNNING but evidence is not JOB_RUNNING type,
-  // show running view (skip for OUTREACH_SEQUENCE which uses ExecutionMonitor)
+  // show running view
   if (selectedView === 'JOB' && selectedJobId && job) {
     if (
       (job.status === 'QUEUED' || job.status === 'RUNNING') &&
@@ -90,30 +86,24 @@ export default function EvidencePane() {
   }
 
   if (!evidence) {
-    // Default to Agent Home
     const homeEvidence = evidenceById['ev_home'];
     if (homeEvidence) return <AgentHome evidence={homeEvidence} />;
     return (
       <div className="flex h-full items-center justify-center">
         <span className="font-body text-ds-base text-li-text-tertiary">
-          Select a thread or job to see details
+          Select a job to see details
         </span>
       </div>
     );
   }
 
-  // Agent Home doesn't get a breadcrumb
   if (evidence.type === 'AGENT_HOME') {
     return <AgentHome evidence={evidence} />;
   }
 
-  // All other evidence types get breadcrumb + context headers + content
   const renderContextHeader = () => {
     if (selectedView === 'JOB' && job) {
       return <EvidenceJobHeader job={job} />;
-    }
-    if (selectedView === 'THREAD' && thread) {
-      return <EvidenceThreadHeader thread={thread} />;
     }
     return null;
   };
@@ -144,6 +134,16 @@ export default function EvidencePane() {
         return <OutreachDraftReview evidence={evidence!} />;
       case 'EXECUTION_MONITOR':
         return <ExecutionMonitor evidence={evidence!} />;
+      case 'REASONING_ANIMATION':
+        return <ReasoningAnimation evidence={evidence!} />;
+      case 'ACCOUNTS_PRIORITIZED':
+        return <AccountsPrioritized evidence={evidence!} hideHeader />;
+      case 'LEADS_DISCOVERY':
+        // Use LeadsFinalList for the final view (ev_leads_final)
+        if (evidence!.id === 'ev_leads_final') {
+          return <LeadsFinalList evidence={evidence!} hideHeader />;
+        }
+        return <LeadsDiscovery evidence={evidence!} hideHeader />;
       default:
         return (
           <div className="flex h-full items-center justify-center">

@@ -1,12 +1,12 @@
 import type { AgentHomeChip } from '../../types/evidence';
-import { useCreateThreadFromPrompt } from '../../hooks/useCreateThreadFromPrompt';
+import { useCreateJobFromPrompt } from '../../hooks/useCreateJobFromPrompt';
 
 interface Props {
   chips: AgentHomeChip[];
 }
 
 export default function StartPointChips({ chips }: Props) {
-  const createFromPrompt = useCreateThreadFromPrompt();
+  const createFromPrompt = useCreateJobFromPrompt();
 
   return (
     <div className="flex flex-wrap gap-[6px]">

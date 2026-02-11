@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Send, Paperclip, Mic } from 'lucide-react';
-import { useCreateThreadFromPrompt } from '../../hooks/useCreateThreadFromPrompt';
+import { useCreateJobFromPrompt } from '../../hooks/useCreateJobFromPrompt';
 
 interface Props {
   placeholders: string[];
@@ -10,7 +10,7 @@ export default function AgentHomeInput({ placeholders }: Props) {
   const [text, setText] = useState('');
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [fade, setFade] = useState(true);
-  const createFromPrompt = useCreateThreadFromPrompt();
+  const createFromPrompt = useCreateJobFromPrompt();
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Rotate placeholder every 4 seconds

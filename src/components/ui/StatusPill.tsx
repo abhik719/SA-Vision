@@ -2,15 +2,13 @@ import clsx from 'clsx';
 import type { JobStatus } from '../../types/common';
 
 const STATUS_LABELS: Record<JobStatus, string> = {
+  NEEDS_INPUT: 'Needs input',
   QUEUED: 'Queued',
   RUNNING: 'Running',
-  NEEDS_APPROVAL: 'Needs review',
+  READY_TO_REVIEW: 'Ready to review',
   COMPLETED: 'Completed',
-  FAILED: 'Failed',
+  BLOCKED: 'Blocked',
   CANCELLED: 'Cancelled',
-  DRAFTING: 'Drafting',
-  NEEDS_INPUT: 'Needs input',
-  READY: 'Ready',
 };
 
 interface Props {

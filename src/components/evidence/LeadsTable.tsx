@@ -17,16 +17,11 @@ export default function LeadsTable({ evidence, hideHeader }: Props) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const rows = (evidence.rows || []) as LeadRow[];
-  const selectThread = useAppStore((s) => s.selectThread);
   const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
 
   const handleStartOutreachPlan = () => {
-    // Check if outreach thread already exists
-    const existingThread = 'thread_outreach_01';
-    selectThread(existingThread);
+    // Navigate to the outreach plan builder evidence
     setCurrentEvidence('ev_outreach_plan_01');
-    // Send a message to trigger the flow
-    processSellerMessage(existingThread, 'Start outreach plan for these leads');
   };
 
   const toggleExpand = (id: string) => {

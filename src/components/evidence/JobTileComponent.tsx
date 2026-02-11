@@ -9,13 +9,11 @@ interface Props {
 }
 
 export default function JobTileComponent({ tile }: Props) {
-  const setActiveTab = useAppStore((s) => s.setActiveTab);
   const selectJob = useAppStore((s) => s.selectJob);
   const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
   const jobsById = useJobStore((s) => s.jobsById);
 
   const handleClick = () => {
-    setActiveTab('JOBS');
     selectJob(tile.jobId);
     // Deep-link: use the job's evidenceId if available, else fall back to target state
     const job = jobsById[tile.jobId];

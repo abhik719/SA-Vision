@@ -1,32 +1,29 @@
 import type { JobProposalCardData } from '../../types/thread';
 import { useAppStore } from '../../store/useAppStore';
 import { useJobStore } from '../../store/useJobStore';
-import { useThreadStore } from '../../store/useThreadStore';
 import { useEvidenceStore } from '../../store/useEvidenceStore';
 import Button from '../ui/Button';
 import { Play, Settings, X } from 'lucide-react';
+import type { JobType } from '../../types/common';
 
 interface Props {
   data: JobProposalCardData;
-  threadId: string;
+  jobId: string;
 }
 
 let jobCounter = 4000;
 
-export default function JobProposalCard({ data, threadId }: Props) {
+export default function JobProposalCard({ data, jobId }: Props) {
   const selectJob = useAppStore((s) => s.selectJob);
-  const setActiveTab = useAppStore((s) => s.setActiveTab);
   const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
-  const createJob = useJobStore((s) => s.createJob);
-  const addSpawnedJob = useThreadStore((s) => s.addSpawnedJob);
+  const { createJobDirect, addSpawnedJob, setJobStatus, updateJobProgress } = useJobStore.getState();
   const setEvidence = useEvidenceStore((s) => s.setEvidence);
 
   const handleRun = () => {
-    const jobId = `job_${++jobCounter}`;
-    const evidenceId = `ev_run_${jobId}`;
+    const childJobId = `job_${++jobCounter}`;
+    const evidenceId = `ev_run_${childJobId}`;
     const now = new Date().toISOString();
 
-    // Create running evidence
     setEvidence(evidenceId, {
       id: evidenceId,
       type: 'JOB_RUNNING',
@@ -37,27 +34,32 @@ export default function JobProposalCard({ data, threadId }: Props) {
       log: [{ time: new Date().toLocaleTimeString(), message: 'Job started' }],
     });
 
-    createJob({
-      id: jobId,
-      originThreadId: threadId,
-      type: data.jobType as import('../../types/common').JobType,
+    createJobDirect({
+      id: childJobId,
+      kind: 'tracked',
+      type: (data.jobType as JobType) || 'ANALYZE',
       title: data.jobName,
       status: 'QUEUED',
+      has_unread_results: false,
       createdAt: now,
       updatedAt: now,
-      inputs: data.jobInputs || {},
+      last_viewed_at: null,
+      expires_at: null,
+      archived_at: null,
+      schedule: null,
+      linked_context: { parent_job_id: jobId },
       evidenceId,
+      inputs: data.jobInputs || {},
+      messages: [],
       progressStages: ['Initializing', 'Scanning data', 'Processing', 'Finalizing', 'Complete'],
       currentStage: 0,
     });
 
-    addSpawnedJob(threadId, jobId);
-    setActiveTab('JOBS');
-    selectJob(jobId);
+    addSpawnedJob(jobId, childJobId);
+    selectJob(childJobId);
     setCurrentEvidence(evidenceId);
 
-    // Simulate progress
-    simulateJobProgress(jobId, evidenceId, data);
+    simulateJobProgress(childJobId, evidenceId, data, jobId);
   };
 
   return (
@@ -127,23 +129,20 @@ export default function JobProposalCard({ data, threadId }: Props) {
 }
 
 function simulateJobProgress(
-  jobId: string,
+  childJobId: string,
   evidenceId: string,
-  data: JobProposalCardData
+  data: JobProposalCardData,
+  parentJobId: string
 ) {
-  const { advanceJobStatus, updateJobProgress, setJobStatus } =
+  const { setJobStatus, updateJobProgress, updateJob, addMessage } =
     useJobStore.getState();
   const { updateEvidence } = useEvidenceStore.getState();
-  const { addMessage, updateMiniOutcome } = useThreadStore.getState();
   const { setCurrentEvidence } = useAppStore.getState();
-  const { jobsById } = useJobStore.getState();
-  const job = jobsById[jobId];
-  const threadId = job?.originThreadId;
 
   // QUEUED -> RUNNING
   setTimeout(() => {
-    advanceJobStatus(jobId);
-    updateJobProgress(jobId, 1);
+    setJobStatus(childJobId, 'RUNNING');
+    updateJobProgress(childJobId, 1);
     updateEvidence(evidenceId, {
       currentStage: 1,
       log: [
@@ -154,7 +153,7 @@ function simulateJobProgress(
   }, 800);
 
   setTimeout(() => {
-    updateJobProgress(jobId, 2);
+    updateJobProgress(childJobId, 2);
     updateEvidence(evidenceId, {
       currentStage: 2,
       log: [
@@ -166,7 +165,7 @@ function simulateJobProgress(
   }, 2500);
 
   setTimeout(() => {
-    updateJobProgress(jobId, 3);
+    updateJobProgress(childJobId, 3);
     updateEvidence(evidenceId, {
       currentStage: 3,
       log: [
@@ -182,42 +181,36 @@ function simulateJobProgress(
   setTimeout(() => {
     const needsApproval = data.approvalsNeeded;
     if (needsApproval) {
-      setJobStatus(jobId, 'NEEDS_APPROVAL');
+      setJobStatus(childJobId, 'NEEDS_INPUT');
     } else {
-      setJobStatus(jobId, 'COMPLETED');
+      setJobStatus(childJobId, 'COMPLETED');
+      updateJob(childJobId, { has_unread_results: true });
     }
-    updateJobProgress(jobId, 4);
+    updateJobProgress(childJobId, 4);
 
-    // Switch evidence to results
     const { jobsById: latestJobs } = useJobStore.getState();
-    const completedJob = latestJobs[jobId];
+    const completedJob = latestJobs[childJobId];
     if (completedJob?.evidenceId) {
       setCurrentEvidence(completedJob.evidenceId);
     }
 
-    // Post result card back to thread
-    if (threadId) {
-      addMessage(threadId, {
-        id: `msg_${Date.now()}`,
-        role: 'agent',
-        timestamp: new Date().toISOString(),
-        content: needsApproval
-          ? `Job "${data.jobName}" is ready for your review.`
-          : `Job "${data.jobName}" completed successfully.`,
-        cardType: 'JOB_RESULT',
-        cardData: {
-          jobId,
-          jobTitle: data.jobName,
-          completedTime: new Date().toISOString(),
-          highlights: needsApproval
-            ? ['Drafts ready for approval']
-            : ['Results ready for review'],
-        },
-      });
-      updateMiniOutcome(
-        threadId,
-        needsApproval ? 'Drafts awaiting approval' : `Completed: ${data.jobName}`
-      );
-    }
+    // Post result card back to parent job
+    addMessage(parentJobId, {
+      id: `msg_${Date.now()}`,
+      role: 'agent',
+      timestamp: new Date().toISOString(),
+      content: needsApproval
+        ? `Job "${data.jobName}" is ready for your review.`
+        : `Job "${data.jobName}" completed successfully.`,
+      cardType: 'JOB_RESULT',
+      cardData: {
+        jobId: childJobId,
+        jobTitle: data.jobName,
+        completedTime: new Date().toISOString(),
+        highlights: needsApproval
+          ? ['Drafts ready for approval']
+          : ['Results ready for review'],
+      },
+    });
   }, 6000);
 }

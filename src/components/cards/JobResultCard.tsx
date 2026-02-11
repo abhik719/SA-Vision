@@ -10,13 +10,11 @@ interface Props {
 
 export default function JobResultCard({ data }: Props) {
   const selectJob = useAppStore((s) => s.selectJob);
-  const setActiveTab = useAppStore((s) => s.setActiveTab);
   const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
   const jobsById = useJobStore((s) => s.jobsById);
 
   const handleReview = () => {
     const job = jobsById[data.jobId];
-    setActiveTab('JOBS');
     selectJob(data.jobId);
     if (job?.evidenceId) {
       setCurrentEvidence(job.evidenceId);

@@ -200,4 +200,58 @@ export interface Evidence {
   executionByLead?: LeadExecutionState[];
   executionEvents?: ExecutionEvent[];
   executionSummary?: { total: number; sent: number; waiting: number; replied: number };
+  // REASONING_ANIMATION
+  reasoningSteps?: ReasoningStep[];
+  reasoningAutoAdvanceEvidenceId?: string;
+  // ACCOUNTS_PRIORITIZED
+  filterChips?: FilterChip[];
+  accountsPrioritized?: PrioritizedAccountRow[];
+  findLeadsLabel?: string;
+  // LEADS_DISCOVERY
+  leadsDiscovery?: DiscoveryLeadRow[];
+  totalLeadsCount?: number;
+  quickResponses?: string[];
+  agentOpeningMessage?: string;
+}
+
+// ── REASONING_ANIMATION types ──
+export interface ReasoningStep {
+  label: string;
+  duration: number;
+  icon: 'search' | 'zap' | 'target' | 'users' | 'brain' | 'chart';
+}
+
+// ── ACCOUNTS_PRIORITIZED types ──
+export interface FilterChip {
+  id: string;
+  label: string;
+  count: number;
+}
+
+export interface PrioritizedAccountRow {
+  id: string;
+  company: string;
+  score: number;
+  primarySignal: string;
+  signalType: 'leadership' | 'funding' | 'engagement' | 'tech_fit' | 'expansion';
+  actionItems: string[];
+  employees: string;
+  industry: string;
+  location: string;
+  filterTags: string[];
+}
+
+// ── LEADS_DISCOVERY types ──
+export interface DiscoveryLeadRow {
+  id: string;
+  name: string;
+  title: string;
+  company: string;
+  signal: string;
+  signalType: 'job_change' | 'engagement' | 'intent' | 'tech_stack';
+  rationale: string;
+  score: number;
+  signals?: string[];
+  email?: string;
+  linkedin?: string;
 }

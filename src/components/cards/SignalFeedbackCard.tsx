@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { SignalFeedbackCardData, SignalFeedbackOption } from '../../types/thread';
 import { useSignalPrefsStore } from '../../store/useSignalPrefsStore';
-import { useThreadStore } from '../../store/useThreadStore';
+import { useJobStore } from '../../store/useJobStore';
 import { processSellerMessage } from '../../flows/engine';
 import {
   Globe,
@@ -24,19 +24,18 @@ const ICONS: Record<string, typeof Globe> = {
 
 interface Props {
   data: SignalFeedbackCardData;
-  threadId: string;
+  jobId: string;
 }
 
-export default function SignalFeedbackCard({ data, threadId }: Props) {
+export default function SignalFeedbackCard({ data, jobId }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const addPreference = useSignalPrefsStore((s) => s.addPreference);
-  const addMessage = useThreadStore((s) => s.addMessage);
+  const addMessage = useJobStore((s) => s.addMessage);
 
   const handleSelect = (option: SignalFeedbackOption) => {
-    if (selectedId) return; // already selected
+    if (selectedId) return;
     setSelectedId(option.id);
 
-    // Store the preference
     addPreference({
       id: `pref_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       signalCardId: data.signalCardId,
@@ -50,17 +49,15 @@ export default function SignalFeedbackCard({ data, threadId }: Props) {
       createdAt: new Date().toISOString(),
     });
 
-    // Simulate seller picking the option
-    addMessage(threadId, {
+    addMessage(jobId, {
       id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       role: 'seller',
       timestamp: new Date().toISOString(),
       content: option.label,
     });
 
-    // Trigger agent confirmation
     setTimeout(() => {
-      processSellerMessage(threadId, `signal_pref_confirmed:${option.scope}:${data.signalCategory}`);
+      processSellerMessage(jobId, `signal_pref_confirmed:${option.scope}:${data.signalCategory}`);
     }, 100);
   };
 
@@ -68,14 +65,12 @@ export default function SignalFeedbackCard({ data, threadId }: Props) {
 
   return (
     <div className="mt-[4px] flex max-w-[90%] flex-col gap-[6px] rounded-ds-card border border-li-border-standard bg-white p-[12px]">
-      {/* Header */}
       <div className="flex items-center gap-[6px]">
         <span className="font-body text-[11px] font-semibold uppercase tracking-wider text-li-text-tertiary">
           {isDown ? 'Adjust this signal' : 'Boost this signal'}
         </span>
       </div>
 
-      {/* Options */}
       <div className="flex flex-col gap-[4px]">
         {data.options.map((option) => {
           const Icon = ICONS[option.icon] || Tag;

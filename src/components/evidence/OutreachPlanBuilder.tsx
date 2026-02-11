@@ -1,18 +1,16 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useOutreachStore } from '../../store/useOutreachStore';
 import { useJobStore } from '../../store/useJobStore';
 import { useEvidenceStore } from '../../store/useEvidenceStore';
 import { useAppStore } from '../../store/useAppStore';
-import { useThreadStore } from '../../store/useThreadStore';
 import type { Evidence } from '../../types/evidence';
-import type { OutreachPlan, OutreachStep, OutreachChannel } from '../../types/outreach';
+import type { OutreachStep, OutreachChannel, StepCondition } from '../../types/outreach';
 import {
   Linkedin,
   Mail,
+  MailCheck,
   MessageSquare,
   UserPlus,
-  ChevronUp,
-  ChevronDown,
   Trash2,
   Plus,
   Shield,
@@ -21,29 +19,82 @@ import {
   Send,
   Save,
   ChevronRight,
+  GitBranch,
+  Heart,
+  ChevronDown,
 } from 'lucide-react';
 
 interface Props {
   evidence: Evidence;
 }
 
-const CHANNEL_CONFIG: Record<OutreachChannel, { label: string; icon: typeof Linkedin; color: string }> = {
-  CONNECT_REQUEST: { label: 'Connection request', icon: UserPlus, color: 'bg-blue-100 text-blue-700' },
-  INMAIL: { label: 'InMail', icon: Linkedin, color: 'bg-indigo-100 text-indigo-700' },
-  LINKEDIN_MESSAGE: { label: 'LinkedIn message', icon: MessageSquare, color: 'bg-sky-100 text-sky-700' },
-  EMAIL: { label: 'Email', icon: Mail, color: 'bg-amber-100 text-amber-700' },
+const CHANNEL_CONFIG: Record<OutreachChannel, { label: string; icon: typeof Linkedin; color: string; bg: string }> = {
+  CONNECT_REQUEST: { label: 'Connection request', icon: UserPlus, color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
+  INMAIL: { label: 'InMail', icon: Linkedin, color: 'text-indigo-700', bg: 'bg-indigo-50 border-indigo-200' },
+  LINKEDIN_MESSAGE: { label: 'LinkedIn message', icon: MessageSquare, color: 'text-sky-700', bg: 'bg-sky-50 border-sky-200' },
+  EMAIL: { label: 'Email', icon: Mail, color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
+  EMAIL_FOLLOWUP: { label: 'Email follow-up', icon: MailCheck, color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' },
+  NURTURE: { label: 'Nurture list', icon: Heart, color: 'text-rose-600', bg: 'bg-rose-50 border-rose-200' },
 };
 
-const CONDITION_LABELS: Record<string, string> = {
-  IF_CONNECT_ACCEPTED: 'If connect accepted',
-  IF_NO_REPLY: 'If no reply',
+const CONDITION_CONFIG: Record<string, { label: string; color: string }> = {
+  IF_CONNECT_ACCEPTED: { label: 'If accepted', color: 'text-green-700 bg-green-50 border-green-200' },
+  IF_NOT_ACCEPTED: { label: 'If not accepted', color: 'text-orange-700 bg-orange-50 border-orange-200' },
+  IF_NO_REPLY: { label: 'If no reply', color: 'text-slate-600 bg-slate-50 border-slate-200' },
+  IF_REPLY: { label: 'If reply', color: 'text-green-700 bg-green-50 border-green-200' },
+  ALWAYS: { label: 'Always', color: 'text-li-text-tertiary bg-li-bg-tertiary border-li-border-standard' },
 };
 
-const TEMPLATES = [
-  { id: 'warm-connect', label: 'Warm connect-first', description: 'Connect → LI message → Email', steps: ['CONNECT_REQUEST', 'LINKEDIN_MESSAGE', 'EMAIL'] },
-  { id: 'inmail-first', label: 'InMail-first', description: 'InMail → Email follow-up', steps: ['INMAIL', 'EMAIL'] },
-  { id: 'email-cadence', label: 'Email-first (cadence)', description: 'Email → LI connect → InMail', steps: ['EMAIL', 'CONNECT_REQUEST', 'INMAIL'] },
-] as const;
+const CHANNEL_OPTIONS: { value: OutreachChannel; label: string }[] = [
+  { value: 'CONNECT_REQUEST', label: 'Connection request' },
+  { value: 'LINKEDIN_MESSAGE', label: 'LinkedIn message' },
+  { value: 'EMAIL', label: 'Email' },
+  { value: 'EMAIL_FOLLOWUP', label: 'Email follow-up' },
+  { value: 'INMAIL', label: 'InMail' },
+  { value: 'NURTURE', label: 'Add to nurture list' },
+];
+
+const CONDITION_OPTIONS: { value: StepCondition; label: string }[] = [
+  { value: 'IF_CONNECT_ACCEPTED', label: 'If connect accepted' },
+  { value: 'IF_NOT_ACCEPTED', label: 'If not accepted' },
+  { value: 'IF_NO_REPLY', label: 'If no reply' },
+  { value: 'IF_REPLY', label: 'If reply received' },
+  { value: 'ALWAYS', label: 'Always (next step)' },
+];
+
+// ── Tree node type for rendering ──
+
+interface TreeNode {
+  step: OutreachStep;
+  children: TreeNode[];
+  depth: number;
+  isBranch: boolean; // true if this is one of multiple children of same parent
+  isLastChild: boolean;
+}
+
+function buildTree(steps: OutreachStep[]): TreeNode[] {
+  const byParent: Record<string, OutreachStep[]> = {};
+  const roots: OutreachStep[] = [];
+
+  for (const step of steps) {
+    const pid = step.parentStepId;
+    if (!pid) {
+      roots.push(step);
+    } else {
+      if (!byParent[pid]) byParent[pid] = [];
+      byParent[pid].push(step);
+    }
+  }
+
+  function recurse(step: OutreachStep, depth: number, isBranch: boolean, isLastChild: boolean): TreeNode {
+    const children = (byParent[step.id] || []).map((child, i, arr) => {
+      return recurse(child, depth + 1, arr.length > 1, i === arr.length - 1);
+    });
+    return { step, children, depth, isBranch, isLastChild };
+  }
+
+  return roots.map((r, i) => recurse(r, 0, false, i === roots.length - 1));
+}
 
 export default function OutreachPlanBuilder({ evidence }: Props) {
   const jobId = evidence.context?.jobId || 'job_outreach_01';
@@ -57,70 +108,87 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
     return list.leadIds.map((lid) => leadsById[lid]).filter(Boolean);
   }, [leadListsById, leadsById, evidence.leadListId]);
   const setPlan = useOutreachStore((s) => s.setPlan);
-  const reorderStep = useOutreachStore((s) => s.reorderStep);
   const removeStep = useOutreachStore((s) => s.removeStep);
   const addStep = useOutreachStore((s) => s.addStep);
+  const updateStep = useOutreachStore((s) => s.updateStep);
   const setJobStatus = useJobStore((s) => s.setJobStatus);
   const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
-  const addMessage = useThreadStore((s) => s.addMessage);
+  const addMessage = useJobStore((s) => s.addMessage);
   const updateEvidence = useEvidenceStore((s) => s.updateEvidence);
 
-  const [selectedTemplate, setSelectedTemplate] = useState(plan?.templateId || 'warm-connect');
   const [showLeads, setShowLeads] = useState(false);
+  const [addingToStepId, setAddingToStepId] = useState<string | null>(null);
+  const [newStepChannel, setNewStepChannel] = useState<OutreachChannel>('EMAIL');
+  const [newStepCondition, setNewStepCondition] = useState<StepCondition>('IF_NO_REPLY');
   const [guardrails, setGuardrails] = useState(
     plan?.guardrails || { approvalRequired: true, maxSendsPerDay: 20, businessHoursOnly: true, stopOnReply: true }
   );
 
   const steps = plan?.steps || [];
+  const tree = useMemo(() => buildTree(steps), [steps]);
 
-  const handleTemplateSelect = (templateId: string) => {
-    setSelectedTemplate(templateId);
-    const tpl = TEMPLATES.find((t) => t.id === templateId);
-    if (!tpl) return;
-    const newSteps: OutreachStep[] = tpl.steps.map((channel, i) => ({
-      id: `step_${String(i + 1).padStart(2, '0')}`,
-      channel: channel as OutreachChannel,
-      dayOffset: i,
-      condition: i === 0 ? null : (channel === 'LINKEDIN_MESSAGE' ? 'IF_CONNECT_ACCEPTED' : 'IF_NO_REPLY'),
-      requiresApproval: true,
-      addToCadence: channel === 'EMAIL',
-    }));
-    const newPlan: OutreachPlan = { steps: newSteps, guardrails, templateId };
-    setPlan(jobId, newPlan);
-  };
-
-  const handleAddStep = () => {
-    const nextId = `step_${String(steps.length + 1).padStart(2, '0')}`;
+  const handleAddStep = useCallback((parentStepId: string) => {
+    const parentStep = steps.find(s => s.id === parentStepId);
+    const nextId = `step_${String(steps.length + 1).padStart(2, '0')}_${Date.now().toString(36)}`;
+    const dayOffset = parentStep ? parentStep.dayOffset + 2 : 0;
     addStep(jobId, {
       id: nextId,
-      channel: 'EMAIL',
-      dayOffset: steps.length > 0 ? steps[steps.length - 1].dayOffset + 2 : 0,
-      condition: 'IF_NO_REPLY',
-      requiresApproval: true,
+      channel: newStepChannel,
+      dayOffset,
+      condition: newStepCondition,
+      parentStepId,
+      requiresApproval: newStepChannel !== 'NURTURE',
+      label: CHANNEL_CONFIG[newStepChannel].label,
     });
-  };
+    setAddingToStepId(null);
+    setNewStepChannel('EMAIL');
+    setNewStepCondition('IF_NO_REPLY');
+  }, [steps, newStepChannel, newStepCondition, addStep, jobId]);
+
+  const handleRemoveStep = useCallback((stepId: string) => {
+    // Remove step and all its descendants
+    const toRemove = new Set<string>();
+    const collectDescendants = (id: string) => {
+      toRemove.add(id);
+      steps.filter(s => s.parentStepId === id).forEach(s => collectDescendants(s.id));
+    };
+    collectDescendants(stepId);
+    // Remove one at a time from leaves up
+    const ordered = [...toRemove].reverse();
+    ordered.forEach(id => removeStep(jobId, id));
+  }, [steps, removeStep, jobId]);
+
+  const handleChangeChannel = useCallback((stepId: string, channel: OutreachChannel) => {
+    updateStep(jobId, stepId, {
+      channel,
+      label: CHANNEL_CONFIG[channel].label,
+      requiresApproval: channel !== 'NURTURE',
+      addToCadence: channel === 'EMAIL' ? true : undefined,
+    });
+  }, [updateStep, jobId]);
+
+  const handleChangeDayOffset = useCallback((stepId: string, dayOffset: number) => {
+    updateStep(jobId, stepId, { dayOffset });
+  }, [updateStep, jobId]);
 
   const handleGenerateDrafts = () => {
-    // 1. Update job status
-    setJobStatus(jobId, 'DRAFTING');
+    setJobStatus(jobId, 'RUNNING');
     setTimeout(() => setJobStatus(jobId, 'NEEDS_INPUT'), 800);
 
-    // 2. Update plan guardrails
     if (plan) {
       setPlan(jobId, { ...plan, guardrails });
     }
 
-    // 3. Add system message to thread
-    const threadId = evidence.context?.threadId;
-    if (threadId) {
-      addMessage(threadId, {
+    const parentJobId = evidence.context?.jobId;
+    if (parentJobId) {
+      addMessage(parentJobId, {
         id: `msg_gen_${Date.now()}`,
         role: 'agent',
         timestamp: new Date().toISOString(),
         content: `Generating drafts for ${evidence.leadCount || 8} leads across ${steps.length} steps. This will take a moment...`,
       });
       setTimeout(() => {
-        addMessage(threadId, {
+        addMessage(parentJobId, {
           id: `msg_gen_done_${Date.now()}`,
           role: 'agent',
           timestamp: new Date().toISOString(),
@@ -130,15 +198,183 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
       }, 1200);
     }
 
-    // 4. Update evidence to mark drafts as ready
     updateEvidence('ev_outreach_drafts_01', {
-      subtitle: `Connection requests, follow-up messages, and emails for ${evidence.leadCount || 8} leads.`,
+      subtitle: `Messages for ${evidence.leadCount || 8} leads across ${steps.length} steps.`,
     });
 
-    // 5. Transition to draft review
     setTimeout(() => {
       setCurrentEvidence('ev_outreach_drafts_01');
     }, 1400);
+  };
+
+  // ── Render a tree node recursively ──
+  const renderNode = (node: TreeNode): React.ReactNode => {
+    const { step, children, depth } = node;
+    const config = CHANNEL_CONFIG[step.channel];
+    const Icon = config.icon;
+    const condConfig = step.condition ? CONDITION_CONFIG[step.condition] || null : null;
+    const isRoot = depth === 0;
+    const hasBranches = children.length > 1;
+
+    return (
+      <div key={step.id} className="relative">
+        {/* Connector line from parent */}
+        {!isRoot && (
+          <div className="flex items-stretch" style={{ paddingLeft: depth * 24 }}>
+            <div className="flex flex-col items-center w-[24px] shrink-0">
+              <div className="w-px flex-1 bg-li-border-standard" />
+            </div>
+            {/* Condition badge on the connector */}
+            {condConfig && (
+              <div className="flex items-center py-[4px]">
+                <span className={`inline-flex items-center gap-[3px] rounded-[4px] border px-[6px] py-[1px] font-body text-[10px] font-medium ${condConfig.color}`}>
+                  {condConfig.label}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Step card */}
+        <div className="flex items-stretch" style={{ paddingLeft: depth * 24 }}>
+          {/* Vertical connector rail */}
+          {!isRoot && (
+            <div className="flex flex-col items-center w-[24px] shrink-0">
+              <div className="w-px h-[8px] bg-li-border-standard" />
+              <div className="w-[8px] h-[8px] rounded-full border-2 border-li-border-standard bg-white shrink-0" />
+              {children.length > 0 && (
+                <div className="w-px flex-1 bg-li-border-standard" />
+              )}
+            </div>
+          )}
+
+          {/* Card */}
+          <div className={`group flex-1 flex items-center gap-[8px] rounded-[8px] border ${config.bg} p-[10px] my-[2px] transition-all hover:shadow-sm`}>
+            {/* Channel icon + pill */}
+            <div className={`flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/80 ${config.color}`}>
+              <Icon size={14} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-[6px]">
+                <span className={`font-body text-[12px] font-semibold ${config.color}`}>
+                  {step.label || config.label}
+                </span>
+                {step.addToCadence && (
+                  <span className="rounded-[3px] bg-white/60 px-[4px] py-[0.5px] font-body text-[9px] text-amber-700">
+                    + cadence
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-[6px] mt-[1px]">
+                <span className="font-body text-[10px] text-li-text-tertiary">
+                  Day {step.dayOffset}
+                </span>
+                {step.requiresApproval && (
+                  <span className="font-body text-[9px] text-li-text-disabled">• Approval req.</span>
+                )}
+              </div>
+            </div>
+
+            {/* Inline editors */}
+            <div className="flex items-center gap-[4px] opacity-0 group-hover:opacity-100 transition-opacity">
+              <select
+                value={step.channel}
+                onChange={(e) => handleChangeChannel(step.id, e.target.value as OutreachChannel)}
+                className="rounded-[4px] border border-li-border-standard bg-white px-[4px] py-[2px] font-body text-[10px] text-li-text-secondary"
+              >
+                {CHANNEL_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+              <input
+                type="number"
+                value={step.dayOffset}
+                onChange={(e) => handleChangeDayOffset(step.id, parseInt(e.target.value) || 0)}
+                className="w-[40px] rounded-[4px] border border-li-border-standard bg-white px-[4px] py-[2px] text-center font-body text-[10px] text-li-text-secondary"
+                title="Day offset"
+              />
+              {!isRoot && (
+                <button
+                  onClick={() => handleRemoveStep(step.id)}
+                  className="rounded p-[3px] text-li-text-disabled hover:bg-red-50 hover:text-red-500"
+                  title="Remove step and children"
+                >
+                  <Trash2 size={12} />
+                </button>
+              )}
+            </div>
+
+            {/* Add child step */}
+            <button
+              onClick={() => setAddingToStepId(addingToStepId === step.id ? null : step.id)}
+              className="rounded p-[3px] text-li-text-disabled hover:bg-li-bg-hover hover:text-li-blue transition-colors"
+              title="Add step after this"
+            >
+              <Plus size={13} />
+            </button>
+          </div>
+        </div>
+
+        {/* Add step popover */}
+        {addingToStepId === step.id && (
+          <div className="flex items-stretch" style={{ paddingLeft: (depth + (isRoot ? 0 : 1)) * 24 }}>
+            {!isRoot && <div className="w-[24px] shrink-0" />}
+            <div className="flex-1 ml-[36px] my-[4px] rounded-[8px] border border-li-blue/30 bg-blue-50/30 p-[10px]">
+              <div className="font-body text-[11px] font-semibold text-li-text-secondary mb-[6px]">
+                Add step after "{step.label || config.label}"
+              </div>
+              <div className="flex items-center gap-[6px] flex-wrap">
+                <select
+                  value={newStepCondition || ''}
+                  onChange={(e) => setNewStepCondition(e.target.value as StepCondition)}
+                  className="rounded-[6px] border border-li-border-standard bg-white px-[8px] py-[4px] font-body text-[11px]"
+                >
+                  {CONDITION_OPTIONS.map(o => (
+                    <option key={o.value || 'null'} value={o.value || ''}>{o.label}</option>
+                  ))}
+                </select>
+                <span className="font-body text-[10px] text-li-text-disabled">→</span>
+                <select
+                  value={newStepChannel}
+                  onChange={(e) => setNewStepChannel(e.target.value as OutreachChannel)}
+                  className="rounded-[6px] border border-li-border-standard bg-white px-[8px] py-[4px] font-body text-[11px]"
+                >
+                  {CHANNEL_OPTIONS.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => handleAddStep(step.id)}
+                  className="flex items-center gap-[3px] rounded-[6px] bg-li-blue px-[10px] py-[4px] font-body text-[11px] font-medium text-white hover:bg-li-blue-dark"
+                >
+                  <Plus size={11} />
+                  Add
+                </button>
+                <button
+                  onClick={() => setAddingToStepId(null)}
+                  className="rounded-[6px] px-[8px] py-[4px] font-body text-[11px] text-li-text-tertiary hover:bg-li-bg-hover"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Branch indicator if multiple children */}
+        {hasBranches && (
+          <div className="flex items-center gap-[6px] py-[2px]" style={{ paddingLeft: (depth + (isRoot ? 0 : 1)) * 24 + (isRoot ? 0 : 24) }}>
+            <GitBranch size={11} className="text-li-text-disabled" />
+            <span className="font-body text-[10px] text-li-text-disabled">
+              {children.length} branches
+            </span>
+          </div>
+        )}
+
+        {/* Render children */}
+        {children.map(child => renderNode(child))}
+      </div>
+    );
   };
 
   return (
@@ -160,7 +396,6 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
             <ChevronRight size={12} className={`transition-transform ${showLeads ? 'rotate-90' : ''}`} />
           </button>
         </div>
-        {/* Filter chips */}
         <div className="mt-[8px] flex flex-wrap gap-[6px]">
           {['Finance', 'RevOps', 'CXO / VP+', 'West SMB'].map((chip) => (
             <span key={chip} className="inline-flex items-center rounded-ds-spotlight bg-li-bg-tertiary px-[8px] py-[2px] font-body text-ds-small text-li-text-tertiary">
@@ -168,7 +403,6 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
             </span>
           ))}
         </div>
-        {/* Expandable lead list */}
         {showLeads && (
           <div className="mt-[12px] space-y-[6px]">
             {leads.length > 0 ? leads.map((lead) => (
@@ -183,7 +417,6 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
                 <span className="font-body text-[10px] text-li-text-disabled">{lead.connectionDegree}</span>
               </div>
             )) : (
-              // Fallback if outreach store not seeded yet
               Array.from({ length: evidence.leadCount || 8 }, (_, i) => (
                 <div key={i} className="flex items-center gap-[8px] rounded-[6px] bg-li-bg-secondary px-[10px] py-[6px]">
                   <div className="h-[28px] w-[28px] rounded-full bg-li-bg-tertiary" />
@@ -198,99 +431,54 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
         )}
       </div>
 
-      {/* Template Selection */}
+      {/* Sequence Flow Canvas */}
       <div className="border-b border-li-border-standard px-[24px] py-[16px]">
-        <h4 className="font-display text-[13px] font-semibold text-li-text-primary mb-[10px]">Choose a template</h4>
-        <div className="grid grid-cols-3 gap-[8px]">
-          {TEMPLATES.map((tpl) => (
-            <button
-              key={tpl.id}
-              onClick={() => handleTemplateSelect(tpl.id)}
-              className={`rounded-[8px] border p-[10px] text-left transition-all ${
-                selectedTemplate === tpl.id
-                  ? 'border-li-blue bg-blue-50/50 ring-1 ring-li-blue/30'
-                  : 'border-li-border-standard hover:border-li-blue/40 hover:bg-li-bg-secondary'
-              }`}
-            >
-              <div className="font-body text-[12px] font-semibold text-li-text-primary">{tpl.label}</div>
-              <div className="mt-[2px] font-body text-[11px] text-li-text-tertiary">{tpl.description}</div>
-            </button>
-          ))}
+        <div className="flex items-center justify-between mb-[12px]">
+          <div className="flex items-center gap-[6px]">
+            <GitBranch size={14} className="text-li-text-tertiary" />
+            <h4 className="font-display text-[13px] font-semibold text-li-text-primary">Outreach sequence</h4>
+          </div>
+          <div className="flex items-center gap-[4px]">
+            <span className="font-body text-[11px] text-li-text-tertiary">
+              {steps.length} steps · {steps.filter(s => !s.parentStepId).length === 0 ? 1 : steps.filter(s => !s.parentStepId).length} entry
+            </span>
+          </div>
         </div>
-      </div>
 
-      {/* Sequence Canvas */}
-      <div className="border-b border-li-border-standard px-[24px] py-[16px]">
-        <h4 className="font-display text-[13px] font-semibold text-li-text-primary mb-[10px]">Sequence steps</h4>
-        <div className="space-y-[8px]">
-          {steps.map((step, idx) => {
-            const config = CHANNEL_CONFIG[step.channel];
-            const Icon = config.icon;
-            return (
-              <div
-                key={step.id}
-                className="group flex items-center gap-[8px] rounded-[8px] border border-li-border-standard bg-white p-[10px] transition-colors hover:border-li-blue/30"
+        {/* Tree canvas */}
+        <div className="relative">
+          {tree.length === 0 ? (
+            <div className="rounded-[8px] border border-dashed border-li-border-standard p-[16px] text-center">
+              <p className="font-body text-[12px] text-li-text-tertiary mb-[8px]">No steps yet. Add a starting action.</p>
+              <button
+                onClick={() => {
+                  addStep(jobId, {
+                    id: 'step_01',
+                    channel: 'CONNECT_REQUEST',
+                    dayOffset: 0,
+                    condition: null,
+                    parentStepId: null,
+                    requiresApproval: true,
+                    label: 'Connection request',
+                  });
+                }}
+                className="flex items-center gap-[4px] mx-auto rounded-[6px] bg-li-blue px-[12px] py-[6px] font-body text-[12px] font-medium text-white hover:bg-li-blue-dark"
               >
-                {/* Step number */}
-                <div className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full bg-li-bg-tertiary font-body text-[11px] font-semibold text-li-text-secondary">
-                  {idx + 1}
-                </div>
-                {/* Channel pill */}
-                <span className={`inline-flex items-center gap-[4px] rounded-[6px] px-[8px] py-[3px] font-body text-[11px] font-medium ${config.color}`}>
-                  <Icon size={12} />
-                  {config.label}
-                </span>
-                {/* Delay */}
-                <span className="font-body text-[11px] text-li-text-tertiary">
-                  Day {step.dayOffset}
-                </span>
-                {/* Condition */}
-                {step.condition && (
-                  <span className="rounded-[4px] bg-li-bg-secondary px-[6px] py-[2px] font-body text-[10px] text-li-text-tertiary">
-                    {CONDITION_LABELS[step.condition] || step.condition}
-                  </span>
-                )}
-                {step.addToCadence && (
-                  <span className="rounded-[4px] bg-amber-50 px-[6px] py-[2px] font-body text-[10px] text-amber-700">
-                    + cadence
-                  </span>
-                )}
-                {/* Spacer */}
-                <div className="flex-1" />
-                {/* Controls */}
-                <div className="flex items-center gap-[2px] opacity-0 transition-opacity group-hover:opacity-100">
-                  <button
-                    onClick={() => reorderStep(jobId, step.id, 'up')}
-                    disabled={idx === 0}
-                    className="rounded p-[3px] text-li-text-disabled hover:bg-li-bg-hover hover:text-li-text-secondary disabled:opacity-30"
-                  >
-                    <ChevronUp size={14} />
-                  </button>
-                  <button
-                    onClick={() => reorderStep(jobId, step.id, 'down')}
-                    disabled={idx === steps.length - 1}
-                    className="rounded p-[3px] text-li-text-disabled hover:bg-li-bg-hover hover:text-li-text-secondary disabled:opacity-30"
-                  >
-                    <ChevronDown size={14} />
-                  </button>
-                  <button
-                    onClick={() => removeStep(jobId, step.id)}
-                    className="rounded p-[3px] text-li-text-disabled hover:bg-red-50 hover:text-red-500"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-          {/* Add step */}
-          <button
-            onClick={handleAddStep}
-            className="flex w-full items-center justify-center gap-[6px] rounded-[8px] border border-dashed border-li-border-standard py-[8px] font-body text-[12px] text-li-text-tertiary transition-colors hover:border-li-blue hover:bg-blue-50/30 hover:text-li-blue"
-          >
-            <Plus size={14} />
-            Add step
-          </button>
+                <Plus size={13} />
+                Add connection request
+              </button>
+            </div>
+          ) : (
+            tree.map(node => renderNode(node))
+          )}
+        </div>
+
+        {/* Hint */}
+        <div className="mt-[10px] flex items-center gap-[4px]">
+          <ChevronDown size={10} className="text-li-text-disabled" />
+          <span className="font-body text-[10px] text-li-text-disabled">
+            Hover any step to edit or add branches. You can also modify this sequence by chatting with the agent.
+          </span>
         </div>
       </div>
 
@@ -325,7 +513,6 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
               </div>
             </label>
           ))}
-          {/* Max sends/day */}
           <div className="flex items-center justify-between rounded-[6px] px-[8px] py-[6px]">
             <div className="flex items-center gap-[8px]">
               <Send size={14} className="text-li-text-tertiary" />

@@ -3,7 +3,6 @@ import { useOutreachStore } from '../../store/useOutreachStore';
 import { useJobStore } from '../../store/useJobStore';
 import { useEvidenceStore } from '../../store/useEvidenceStore';
 import { useAppStore } from '../../store/useAppStore';
-import { useThreadStore } from '../../store/useThreadStore';
 import type { Evidence } from '../../types/evidence';
 import type { OutreachDraft } from '../../types/outreach';
 import {
@@ -20,6 +19,7 @@ import {
   Calendar,
   X,
 } from 'lucide-react';
+import { getLeadAvatar } from '../../data/leadAvatars';
 
 interface Props {
   evidence: Evidence;
@@ -55,7 +55,7 @@ export default function OutreachDraftReview({ evidence }: Props) {
   const approveAllDrafts = useOutreachStore((s) => s.approveAllDrafts);
   const setJobStatus = useJobStore((s) => s.setJobStatus);
   const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
-  const addMessage = useThreadStore((s) => s.addMessage);
+  const addMessage = useJobStore((s) => s.addMessage);
   const setJobEvidence = useJobStore((s) => s.setJobEvidence);
   const updateEvidence = useEvidenceStore((s) => s.updateEvidence);
 
@@ -128,9 +128,9 @@ export default function OutreachDraftReview({ evidence }: Props) {
     updateDraftBody(selectedDraft.id, newBody);
     setEditingBody(newBody);
 
-    const threadId = evidence.context?.threadId;
-    if (threadId) {
-      addMessage(threadId, {
+    const parentJobId = evidence.context?.jobId;
+    if (parentJobId) {
+      addMessage(parentJobId, {
         id: `msg_rewrite_${Date.now()}`,
         role: 'agent',
         timestamp: new Date().toISOString(),
@@ -143,7 +143,6 @@ export default function OutreachDraftReview({ evidence }: Props) {
     if (!selectedDraft) return;
     let newBody = selectedDraft.body;
     if (type === 'shorter') {
-      // Keep first sentence only + CTA
       const firstSentence = newBody.split(/[.!?]/)[0];
       newBody = `${firstSentence}. Open to a quick chat?`;
     } else {
@@ -159,17 +158,16 @@ export default function OutreachDraftReview({ evidence }: Props) {
   };
 
   const handleSchedule = () => {
-    setJobStatus(jobId, 'READY');
+    setJobStatus(jobId, 'COMPLETED');
     setJobEvidence(jobId, 'ev_outreach_exec_01');
 
-    // Update execution evidence
     updateEvidence('ev_outreach_exec_01', {
       executionSummary: { total: drafts.length, sent: 0, waiting: 0, replied: 0 },
     });
 
-    const threadId = evidence.context?.threadId;
-    if (threadId) {
-      addMessage(threadId, {
+    const parentJobId = evidence.context?.jobId;
+    if (parentJobId) {
+      addMessage(parentJobId, {
         id: `msg_schedule_${Date.now()}`,
         role: 'agent',
         timestamp: new Date().toISOString(),
@@ -278,9 +276,17 @@ export default function OutreachDraftReview({ evidence }: Props) {
                 }`}
               >
                 <div className="flex items-center gap-[6px]">
-                  <div className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full bg-li-bg-tertiary text-[10px] font-semibold text-li-text-secondary">
-                    {(lead?.fullName || draft.leadId).split(' ').map(n => n[0]).join('').slice(0, 2)}
-                  </div>
+                  {getLeadAvatar(draft.leadId) ? (
+                    <img
+                      src={getLeadAvatar(draft.leadId)}
+                      alt={lead?.fullName || draft.leadId}
+                      className="h-[24px] w-[24px] shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full bg-li-bg-tertiary text-[10px] font-semibold text-li-text-secondary">
+                      {(lead?.fullName || draft.leadId).split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-body text-[12px] font-medium text-li-text-primary">
                       {lead?.fullName || draft.leadId}
@@ -309,9 +315,17 @@ export default function OutreachDraftReview({ evidence }: Props) {
               {selectedLead && (
                 <div className="border-b border-li-border-standard px-[20px] py-[12px]">
                   <div className="flex items-center gap-[10px]">
-                    <div className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-li-blue/10 text-[13px] font-semibold text-li-blue">
-                      {selectedLead.fullName.split(' ').map(n => n[0]).join('')}
-                    </div>
+                    {getLeadAvatar(selectedDraft.leadId) ? (
+                      <img
+                        src={getLeadAvatar(selectedDraft.leadId)}
+                        alt={selectedLead.fullName}
+                        className="h-[36px] w-[36px] rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-li-blue/10 text-[13px] font-semibold text-li-blue">
+                        {selectedLead.fullName.split(' ').map(n => n[0]).join('')}
+                      </div>
+                    )}
                     <div>
                       <div className="font-body text-[13px] font-semibold text-li-text-primary">
                         {selectedLead.fullName}

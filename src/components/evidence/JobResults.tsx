@@ -12,7 +12,6 @@ interface Props {
 
 export default function JobResults({ evidence, hideHeader }: Props) {
   const selectedJobId = useAppStore((s) => s.selectedJobId);
-  const selectThread = useAppStore((s) => s.selectThread);
   const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
   const job = useJobStore((s) =>
     selectedJobId ? s.jobsById[selectedJobId] : null
@@ -20,8 +19,6 @@ export default function JobResults({ evidence, hideHeader }: Props) {
   const summary = job?.outputs?.summary || evidence.summary || {};
 
   const handleDraftOutreach = () => {
-    // Navigate to outreach plan builder
-    selectThread('thread_outreach_01');
     setCurrentEvidence('ev_outreach_plan_01');
   };
 
