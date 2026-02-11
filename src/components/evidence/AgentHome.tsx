@@ -9,7 +9,6 @@ import SectionHeader from './SectionHeader';
 import SignalCardComponent from './SignalCardComponent';
 import JobTileComponent from './JobTileComponent';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
-import { processSellerMessage } from '../../flows/engine';
 
 interface Props {
   evidence: Evidence;

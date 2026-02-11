@@ -13,7 +13,7 @@ interface Props {
 
 export default function JobRunning({ evidence, hideHeader }: Props) {
   const selectedJobId = useAppStore((s) => s.selectedJobId);
-  const cancelJob = useJobStore((s) => s.cancelJob);
+  const setJobStatus = useJobStore((s) => s.setJobStatus);
 
   const stages = evidence.stages || [];
   const currentStage = evidence.currentStage ?? 0;
@@ -109,7 +109,7 @@ export default function JobRunning({ evidence, hideHeader }: Props) {
             <Button
               variant="danger"
               size="sm"
-              onClick={() => selectedJobId && cancelJob(selectedJobId)}
+              onClick={() => selectedJobId && setJobStatus(selectedJobId, 'CANCELLED')}
             >
               Cancel job
             </Button>

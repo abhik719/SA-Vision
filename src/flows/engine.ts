@@ -566,10 +566,8 @@ function flowOutreachSetApproval(jobId: string, requireApproval: boolean) {
 
   setTimeout(() => {
     const steps = useOutreachStore.getState().outreachPlansById[jobId]?.steps || [];
-    const root = steps[0];
-    const isLinkedInFirst = root?.channel === 'CONNECT_REQUEST';
 
-    const stepLines = steps.map((s, i) => {
+    const stepLines = steps.map((s) => {
       const approval = s.requiresApproval ? ' (approval req.)' : '';
       const cond = s.condition ? ` ${s.condition === 'IF_NOT_ACCEPTED' ? 'if not accepted' : s.condition === 'IF_NO_REPLY' ? 'if no reply' : s.condition === 'IF_CONNECT_ACCEPTED' ? 'if accepted' : ''}` : '';
       return `\u2022 Day ${s.dayOffset}: ${s.label || s.channel}${approval}${cond}`;
@@ -682,7 +680,7 @@ function flowOutreachValueProp(jobId: string, angle: string) {
 
 // "Save lead list & generate drafts" — shortcut that saves + creates drafts in one step
 function flowOutreachSaveAndGenerate(jobId: string) {
-  const { setPlan, outreachPlansById } = useOutreachStore.getState();
+  void useOutreachStore.getState(); // access store if needed later
 
   setTimeout(() => {
     // Create the drafts job

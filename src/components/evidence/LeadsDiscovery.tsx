@@ -5,7 +5,6 @@ import { useAppStore } from '../../store/useAppStore';
 import { useJobStore } from '../../store/useJobStore';
 import { processSellerMessage } from '../../flows/engine';
 import EvidenceHeader from './EvidenceHeader';
-import Button from '../ui/Button';
 import { Send, Save, Rocket, ChevronRight, Mail, Linkedin } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -34,7 +33,6 @@ function renderMessage(message: string) {
 
 export default function LeadsDiscovery({ evidence, hideHeader }: Props) {
   const selectedJobId = useAppStore((s) => s.selectedJobId);
-  const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
   const jobsById = useJobStore((s) => s.jobsById);
   const addMessage = useJobStore((s) => s.addMessage);
 

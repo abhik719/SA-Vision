@@ -16,7 +16,7 @@ let jobCounter = 4000;
 export default function JobProposalCard({ data, jobId }: Props) {
   const selectJob = useAppStore((s) => s.selectJob);
   const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
-  const { createJobDirect, addSpawnedJob, setJobStatus, updateJobProgress } = useJobStore.getState();
+  const { createJobDirect, addSpawnedJob } = useJobStore.getState();
   const setEvidence = useEvidenceStore((s) => s.setEvidence);
 
   const handleRun = () => {

@@ -28,7 +28,6 @@ export default function SignalCardComponent({ card }: Props) {
   const selectJob = useAppStore((s) => s.selectJob);
   const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
   const createJobAction = useJobStore((s) => s.createJob);
-  const addMessage = useJobStore((s) => s.addMessage);
   const setEvidence = useEvidenceStore((s) => s.setEvidence);
 
   const accountEntities = card.entities.filter((e) => e.type === 'account');

@@ -1,4 +1,4 @@
-import { useState, Fragment } from 'react';
+import { useState } from 'react';
 import type { Evidence, DiscoveryLeadRow } from '../../types/evidence';
 import { useAppStore } from '../../store/useAppStore';
 import EvidenceHeader from './EvidenceHeader';

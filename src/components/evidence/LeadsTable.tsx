@@ -5,7 +5,6 @@ import SignalPill from '../ui/SignalPill';
 import Button from '../ui/Button';
 import { ChevronDown, ChevronRight, Send } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-import { processSellerMessage } from '../../flows/engine';
 import clsx from 'clsx';
 
 interface Props {
