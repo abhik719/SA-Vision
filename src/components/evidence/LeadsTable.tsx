@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import type { Evidence, LeadRow } from '../../types/evidence';
 import EvidenceHeader from './EvidenceHeader';
 import SignalPill from '../ui/SignalPill';
@@ -128,9 +128,8 @@ export default function LeadsTable({ evidence, hideHeader }: Props) {
             {rows.map((row) => {
               const isExpanded = expandedRows.has(row.id);
               return (
-                <>
+                <Fragment key={row.id}>
                   <tr
-                    key={row.id}
                     className={clsx(
                       'cursor-pointer transition-colors hover:bg-li-bg-hover',
                       selectedRows.has(row.id) && 'bg-li-bg-selected'
@@ -220,7 +219,7 @@ export default function LeadsTable({ evidence, hideHeader }: Props) {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               );
             })}
           </tbody>

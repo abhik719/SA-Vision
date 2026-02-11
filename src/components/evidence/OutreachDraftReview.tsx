@@ -46,7 +46,8 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
 
 export default function OutreachDraftReview({ evidence }: Props) {
   const jobId = evidence.context?.jobId || 'job_outreach_01';
-  const allDrafts = useOutreachStore((s) => Object.values(s.draftsById));
+  const draftsById = useOutreachStore((s) => s.draftsById);
+  const allDrafts = useMemo(() => Object.values(draftsById), [draftsById]);
   const leadsById = useOutreachStore((s) => s.leadsById);
   const updateDraftStatus = useOutreachStore((s) => s.updateDraftStatus);
   const updateDraftBody = useOutreachStore((s) => s.updateDraftBody);

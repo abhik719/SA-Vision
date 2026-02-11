@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useOutreachStore } from '../../store/useOutreachStore';
 import { useJobStore } from '../../store/useJobStore';
 import { useEvidenceStore } from '../../store/useEvidenceStore';
@@ -48,7 +48,14 @@ const TEMPLATES = [
 export default function OutreachPlanBuilder({ evidence }: Props) {
   const jobId = evidence.context?.jobId || 'job_outreach_01';
   const plan = useOutreachStore((s) => s.outreachPlansById[jobId]) || evidence.outreachPlan;
-  const leads = useOutreachStore((s) => s.getLeadsForList(evidence.leadListId || ''));
+  const leadListsById = useOutreachStore((s) => s.leadListsById);
+  const leadsById = useOutreachStore((s) => s.leadsById);
+  const leads = useMemo(() => {
+    const listId = evidence.leadListId || '';
+    const list = leadListsById[listId];
+    if (!list) return [];
+    return list.leadIds.map((lid) => leadsById[lid]).filter(Boolean);
+  }, [leadListsById, leadsById, evidence.leadListId]);
   const setPlan = useOutreachStore((s) => s.setPlan);
   const reorderStep = useOutreachStore((s) => s.reorderStep);
   const removeStep = useOutreachStore((s) => s.removeStep);
