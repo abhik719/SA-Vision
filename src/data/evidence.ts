@@ -1,5 +1,6 @@
 import type { Evidence } from '../types/evidence';
 import { seedDrafts, seedDraftsForOutreach6 } from './drafts';
+import { seedOutreachDrafts, defaultOutreachPlan } from './outreachLeads';
 import { getAccountLogo } from './accountLogos';
 import { getLeadAvatar } from './leadAvatars';
 
@@ -24,6 +25,7 @@ export const seedEvidence: Evidence[] = [
       { id: 'chip_cfos', label: 'Find CFOs/Finance for top accounts', seedPrompt: "Find CFOs and VPs of Finance for the top accounts this week." },
       { id: 'chip_coldstart', label: 'Find me 10 accounts with a clear wedge', seedPrompt: "I'm cold-starting this territory—find 10 accounts with a wedge." },
       { id: 'chip_draft', label: 'Draft outreach with reason-for-now', seedPrompt: "Draft outreach using the reason-for-now signals." },
+      { id: 'chip_outreach_plan', label: 'Draft reason-for-now outreach', seedPrompt: "Draft reason-for-now outreach for my lead list." },
       { id: 'chip_approvals', label: 'Show drafts waiting for approval', seedPrompt: "Show drafts waiting for approval." },
     ],
     signalCards: [
@@ -148,6 +150,16 @@ export const seedEvidence: Evidence[] = [
         updated: '20m ago',
         status: 'Needs review',
         primaryCta: { label: 'Review', targetState: 'APPROVALS' },
+      },
+      {
+        id: 'jobtile_outreach',
+        jobId: 'job_outreach_01',
+        title: 'Review outreach drafts (8 leads)',
+        jobTypeLabel: 'Outreach Sequence',
+        scopeLabel: '12 drafts',
+        updated: '5m ago',
+        status: 'Needs review',
+        primaryCta: { label: 'Review', targetState: 'DRAFT_REVIEW' },
       },
       {
         id: 'jobtile_003',
@@ -412,5 +424,57 @@ export const seedEvidence: Evidence[] = [
       { label: 'Find leads for missing personas', action: 'FIND_LEADS' },
       { label: 'Draft intro messages', action: 'DRAFT_OUTREACH' },
     ],
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // OUTREACH FLOW: Plan → Draft → Schedule → Monitor
+  // ═══════════════════════════════════════════════════════
+
+  // Outreach Plan Builder
+  {
+    id: 'ev_outreach_plan_01',
+    type: 'OUTREACH_PLAN_BUILDER',
+    title: 'Build outreach plan',
+    subtitle: 'You picked 8 leads. I\'ll draft content and schedule execution after your review.',
+    context: { threadId: 'thread_outreach_01', jobId: 'job_outreach_01' },
+    generatedAt: '2026-02-10T09:42:00-08:00',
+    outreachPlan: defaultOutreachPlan,
+    leadListId: 'leadlist_west_smb_weekly_01',
+    leadCount: 8,
+  },
+
+  // Outreach Draft Review
+  {
+    id: 'ev_outreach_drafts_01',
+    type: 'OUTREACH_DRAFT_REVIEW',
+    title: 'Review drafts (12)',
+    subtitle: 'Connection requests, follow-up messages, and emails for 8 leads.',
+    context: { threadId: 'thread_outreach_01', jobId: 'job_outreach_01' },
+    generatedAt: '2026-02-10T09:44:00-08:00',
+    outreachDrafts: seedOutreachDrafts,
+    leadListId: 'leadlist_west_smb_weekly_01',
+    leadCount: 8,
+  },
+
+  // Execution Monitor
+  {
+    id: 'ev_outreach_exec_01',
+    type: 'EXECUTION_MONITOR',
+    title: 'Outreach running',
+    subtitle: '8 leads • 3-step sequence • Connect-first',
+    context: { threadId: 'thread_outreach_01', jobId: 'job_outreach_01' },
+    generatedAt: '2026-02-10T10:00:00-08:00',
+    executionByLead: [
+      { leadId: 'lead_01', currentStepId: 'step_01', status: 'QUEUED', nextActionAt: '2026-02-10T10:30:00-08:00' },
+      { leadId: 'lead_02', currentStepId: 'step_01', status: 'QUEUED', nextActionAt: '2026-02-10T10:31:00-08:00' },
+      { leadId: 'lead_03', currentStepId: 'step_01', status: 'QUEUED', nextActionAt: '2026-02-10T10:32:00-08:00' },
+      { leadId: 'lead_04', currentStepId: 'step_01', status: 'QUEUED', nextActionAt: '2026-02-10T10:33:00-08:00' },
+      { leadId: 'lead_05', currentStepId: 'step_01', status: 'QUEUED', nextActionAt: '2026-02-10T10:34:00-08:00' },
+      { leadId: 'lead_06', currentStepId: 'step_01', status: 'QUEUED', nextActionAt: '2026-02-10T10:35:00-08:00' },
+      { leadId: 'lead_07', currentStepId: 'step_01', status: 'QUEUED', nextActionAt: '2026-02-10T10:36:00-08:00' },
+      { leadId: 'lead_08', currentStepId: 'step_01', status: 'QUEUED', nextActionAt: '2026-02-10T10:37:00-08:00' },
+    ],
+    executionEvents: [],
+    executionSummary: { total: 8, sent: 0, waiting: 0, replied: 0 },
   },
 ];

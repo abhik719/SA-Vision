@@ -126,6 +126,55 @@ export function processSellerMessage(threadId: string, content: string) {
   }
 
   // ═══════════════════════════════════════════════════
+  // OUTREACH FLOW: Plan → Draft → Schedule → Monitor
+  // ═══════════════════════════════════════════════════
+  if (
+    threadId === 'thread_outreach_01' &&
+    (lower.includes('suggest a plan') || lower.includes('connect-first') || lower.includes('connect first') ||
+     lower.includes('inmail-first') || lower.includes('inmail first') || lower.includes('email-only') ||
+     lower.includes('email only'))
+  ) {
+    flowOutreachSuggestPlan(threadId, content);
+    return;
+  }
+  if (
+    threadId === 'thread_outreach_01' &&
+    (lower.includes('make email') || lower.includes('add inmail') || lower.includes('remove email') ||
+     lower.includes('change') && lower.includes('day'))
+  ) {
+    flowOutreachModifyPlan(threadId, content);
+    return;
+  }
+  if (
+    threadId === 'thread_outreach_01' &&
+    (lower.includes('proceed to drafts') || lower.includes('generate drafts'))
+  ) {
+    flowOutreachProceedToDrafts(threadId);
+    return;
+  }
+  if (
+    threadId === 'thread_outreach_01' &&
+    (lower.includes('start outreach plan') || lower.includes('outreach plan'))
+  ) {
+    flowOutreachStartFromLeads(threadId);
+    return;
+  }
+  if (
+    threadId === 'thread_outreach_01' &&
+    (lower.includes('schedule') && lower.includes('run'))
+  ) {
+    flowOutreachSchedule(threadId);
+    return;
+  }
+  if (
+    threadId === 'thread_outreach_01' &&
+    lower.includes('draft follow-up')
+  ) {
+    flowOutreachDraftFollowups(threadId);
+    return;
+  }
+
+  // ═══════════════════════════════════════════════════
   // GENERIC FLOWS
   // ═══════════════════════════════════════════════════
   if (lower.includes('draft') || lower.includes('outreach') || lower.includes('reason-for-now')) {
@@ -815,6 +864,147 @@ function flowFindOppRiskLeads(threadId: string) {
       threadId,
       [
         { id: 'ns_opp_find_1', title: 'Run the lead search', why: 'Job configured and ready to go', cta: 'Run', prompt: 'Yes\u2014run it.' },
+      ],
+      []
+    );
+  }, 800);
+}
+
+// ═══════════════════════════════════════════════════════
+// OUTREACH FLOW: Plan → Draft → Schedule → Monitor
+// ═══════════════════════════════════════════════════════
+
+function flowOutreachSuggestPlan(threadId: string, content: string) {
+  const lower = content.toLowerCase();
+  let templateLabel = 'connect-first';
+  if (lower.includes('inmail')) templateLabel = 'InMail-first';
+  if (lower.includes('email')) templateLabel = 'email-first (cadence)';
+
+  setTimeout(() => {
+    addAgentMessage(
+      threadId,
+      `Proposed plan (**${templateLabel}**):\n• **Day 0:** Connection request (short, reason-for-now)\n• **If accepted → Day 1:** LinkedIn message\n• **If no response → Day 2:** Email (add to cadence)\n\nGuardrails: approval required, max 20/day, stop on reply.\nWant to change anything (timing, channels, follow-ups)?`,
+      {
+        cardType: 'DECISION_CHIPS',
+        cardData: ['Connect-first', 'Approval required', 'Max 20/day'],
+      }
+    );
+    setEvidence('ev_outreach_plan_01');
+
+    updateThreadSuggestions(
+      threadId,
+      [
+        { id: 'ns_out_1', title: 'Proceed to draft generation', why: 'Plan looks good — generate drafts for all 8 leads', cta: 'Run', prompt: 'Proceed to drafts.' },
+        { id: 'ns_out_2', title: 'Change email to Day 2', why: 'Tighten the sequence timing', cta: 'Run', prompt: 'Make email Day 2. Proceed to drafts.' },
+      ],
+      [
+        { id: 'as_out_1', question: 'Can you add an InMail step for 3rd-degree connections?', why: 'InMail works better for cold outreach to non-connections' },
+      ]
+    );
+  }, 800);
+}
+
+function flowOutreachModifyPlan(threadId: string, content: string) {
+  const lower = content.toLowerCase();
+  let modification = 'Updated the plan as requested.';
+  if (lower.includes('make email day 2')) modification = 'Updated: email moved to Day 2 instead of Day 4.';
+  if (lower.includes('add inmail')) modification = 'Added an InMail step for 3rd-degree connections.';
+  if (lower.includes('remove email')) modification = 'Removed the email step from the sequence.';
+
+  setTimeout(() => {
+    addAgentMessage(threadId, `${modification} Ready to generate drafts?`);
+
+    updateThreadSuggestions(
+      threadId,
+      [
+        { id: 'ns_mod_1', title: 'Generate drafts for all 8 leads', why: 'Plan updated — ready to create personalized messages', cta: 'Run', prompt: 'Proceed to drafts.' },
+      ],
+      []
+    );
+  }, 600);
+}
+
+function flowOutreachProceedToDrafts(threadId: string) {
+  setTimeout(() => {
+    addAgentMessage(
+      threadId,
+      "Perfect. I'll generate drafts for the connection request + the follow-up message + the email, tailored per lead using their role + your reason-for-now. Review and approve, then I'll schedule execution.",
+      {
+        attachments: [
+          { type: 'EVIDENCE_LINK', evidenceId: 'ev_outreach_drafts_01', label: 'Review drafts (12)' },
+        ],
+      }
+    );
+    setEvidence('ev_outreach_drafts_01');
+
+    updateThreadSuggestions(
+      threadId,
+      [
+        { id: 'ns_drafts_1', title: 'Review and approve outreach drafts', why: '12 drafts across 3 steps waiting for your review', cta: 'Open', prompt: 'Show me the draft review queue' },
+        { id: 'ns_drafts_2', title: 'Make drafts more concise', why: 'Batch-edit all drafts with a single instruction', cta: 'Run', prompt: 'Make the connection requests shorter — under 40 words.' },
+      ],
+      [
+        { id: 'as_drafts_1', question: 'Which leads have the warmest path?', why: 'Prioritize outreach to leads with mutual connections' },
+      ]
+    );
+  }, 800);
+}
+
+function flowOutreachStartFromLeads(threadId: string) {
+  setTimeout(() => {
+    addAgentMessage(
+      threadId,
+      'Want me to suggest an outreach plan for these 8 leads? I can propose a sequence across LinkedIn + email, then draft the content for your approval.',
+    );
+    setEvidence('ev_outreach_plan_01');
+
+    updateThreadSuggestions(
+      threadId,
+      [
+        { id: 'ns_start_1', title: 'Yes — suggest a connect-first plan', why: 'Start with connection request, then follow up', cta: 'Run', prompt: 'Yes—connect first, then message if they accept. Keep it concise.' },
+        { id: 'ns_start_2', title: 'InMail-first plan', why: 'Start with InMail for faster outreach', cta: 'Run', prompt: 'Yes—InMail first, then email follow-up.' },
+        { id: 'ns_start_3', title: 'Email-only (cadence)', why: 'Add all leads to an email cadence', cta: 'Run', prompt: 'Yes—email only via cadence.' },
+      ],
+      []
+    );
+  }, 600);
+}
+
+function flowOutreachSchedule(threadId: string) {
+  setTimeout(() => {
+    addAgentMessage(
+      threadId,
+      'Outreach job scheduled and running. Sending connection requests to 8 leads. I\'ll notify you of accepts and replies.',
+    );
+    setEvidence('ev_outreach_exec_01');
+
+    // Update job status
+    const { setJobStatus } = useJobStore.getState();
+    setJobStatus('job_outreach_01', 'RUNNING');
+  }, 600);
+}
+
+function flowOutreachDraftFollowups(threadId: string) {
+  setTimeout(() => {
+    addAgentMessage(
+      threadId,
+      "I'll draft follow-up messages for the 3 connections that were accepted. Each message will reference the original connection request and add a new angle based on their recent activity.",
+      {
+        cardType: 'JOB_PROPOSAL',
+        cardData: {
+          jobName: 'Draft follow-up messages (3 accepted connections)',
+          jobType: 'DRAFT_OUTREACH',
+          inputsSummary: ['3 accepted connections', 'Reference original connect request', 'Add activity-based angle'],
+          outputsExpected: ['3 follow-up drafts', 'Approval queue'],
+          approvalsNeeded: true,
+        },
+      }
+    );
+
+    updateThreadSuggestions(
+      threadId,
+      [
+        { id: 'ns_followup_1', title: 'Generate the follow-up drafts', why: '3 connections accepted — great time to follow up', cta: 'Run', prompt: 'Yes—generate the follow-up drafts.' },
       ],
       []
     );

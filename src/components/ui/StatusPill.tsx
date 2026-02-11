@@ -8,6 +8,9 @@ const STATUS_LABELS: Record<JobStatus, string> = {
   COMPLETED: 'Completed',
   FAILED: 'Failed',
   CANCELLED: 'Cancelled',
+  DRAFTING: 'Drafting',
+  NEEDS_INPUT: 'Needs input',
+  READY: 'Ready',
 };
 
 interface Props {

@@ -3,7 +3,9 @@ import type { Evidence, LeadRow } from '../../types/evidence';
 import EvidenceHeader from './EvidenceHeader';
 import SignalPill from '../ui/SignalPill';
 import Button from '../ui/Button';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Send } from 'lucide-react';
+import { useAppStore } from '../../store/useAppStore';
+import { processSellerMessage } from '../../flows/engine';
 import clsx from 'clsx';
 
 interface Props {
@@ -15,6 +17,17 @@ export default function LeadsTable({ evidence, hideHeader }: Props) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const rows = (evidence.rows || []) as LeadRow[];
+  const selectThread = useAppStore((s) => s.selectThread);
+  const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
+
+  const handleStartOutreachPlan = () => {
+    // Check if outreach thread already exists
+    const existingThread = 'thread_outreach_01';
+    selectThread(existingThread);
+    setCurrentEvidence('ev_outreach_plan_01');
+    // Send a message to trigger the flow
+    processSellerMessage(existingThread, 'Start outreach plan for these leads');
+  };
 
   const toggleExpand = (id: string) => {
     setExpandedRows((prev) => {
@@ -73,11 +86,19 @@ export default function LeadsTable({ evidence, hideHeader }: Props) {
                       ? `${selectedRows.size} selected`
                       : `${rows.length} lead${rows.length !== 1 ? 's' : ''}`}
                   </span>
-                  {hasSelection && (
+                  {hasSelection ? (
                     <>
                       <Button size="sm">Draft outreach for selected</Button>
                       <Button size="sm" variant="secondary">Use as input</Button>
                     </>
+                  ) : (
+                    <button
+                      onClick={handleStartOutreachPlan}
+                      className="flex items-center gap-[4px] rounded-[6px] bg-li-blue px-[10px] py-[4px] font-body text-[12px] font-medium text-white transition-colors hover:bg-li-blue-dark"
+                    >
+                      <Send size={12} />
+                      Start outreach plan
+                    </button>
                   )}
                 </div>
               </th>

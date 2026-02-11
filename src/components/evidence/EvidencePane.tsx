@@ -13,6 +13,9 @@ import SignalDetail from './SignalDetail';
 import ApprovalQueue from './ApprovalQueue';
 import NeedsAttentionView from './NeedsAttentionView';
 import ConfigurationView from './ConfigurationView';
+import OutreachPlanBuilder from './OutreachPlanBuilder';
+import OutreachDraftReview from './OutreachDraftReview';
+import ExecutionMonitor from './ExecutionMonitor';
 import EvidenceJobHeader from './EvidenceJobHeader';
 import EvidenceThreadHeader from './EvidenceThreadHeader';
 
@@ -56,11 +59,12 @@ export default function EvidencePane() {
   }
 
   // If job is selected and status is RUNNING but evidence is not JOB_RUNNING type,
-  // show running view
+  // show running view (skip for OUTREACH_SEQUENCE which uses ExecutionMonitor)
   if (selectedView === 'JOB' && selectedJobId && job) {
     if (
       (job.status === 'QUEUED' || job.status === 'RUNNING') &&
-      evidence?.type !== 'JOB_RUNNING'
+      evidence?.type !== 'JOB_RUNNING' &&
+      job.type !== 'OUTREACH_SEQUENCE'
     ) {
       return (
         <div className="flex h-full flex-col">
@@ -134,6 +138,12 @@ export default function EvidencePane() {
         return <NeedsAttentionView evidence={evidence!} />;
       case 'CONFIGURATION':
         return <ConfigurationView evidence={evidence!} />;
+      case 'OUTREACH_PLAN_BUILDER':
+        return <OutreachPlanBuilder evidence={evidence!} />;
+      case 'OUTREACH_DRAFT_REVIEW':
+        return <OutreachDraftReview evidence={evidence!} />;
+      case 'EXECUTION_MONITOR':
+        return <ExecutionMonitor evidence={evidence!} />;
       default:
         return (
           <div className="flex h-full items-center justify-center">

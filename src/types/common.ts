@@ -18,7 +18,8 @@ export type JobType =
   | 'PRIORITIZE'
   | 'ANALYZE'
   | 'PRIORITIZE_ACCOUNTS'
-  | 'MULTITHREAD_PLAN';
+  | 'MULTITHREAD_PLAN'
+  | 'OUTREACH_SEQUENCE';
 
 export type JobStatus =
   | 'QUEUED'
@@ -26,7 +27,10 @@ export type JobStatus =
   | 'NEEDS_APPROVAL'
   | 'COMPLETED'
   | 'FAILED'
-  | 'CANCELLED';
+  | 'CANCELLED'
+  | 'DRAFTING'
+  | 'NEEDS_INPUT'
+  | 'READY';
 
 export type EvidenceType =
   | 'AGENT_HOME'
@@ -38,10 +42,13 @@ export type EvidenceType =
   | 'APPROVAL_QUEUE'
   | 'SIGNAL_DETAIL'
   | 'NEEDS_ATTENTION'
-  | 'CONFIGURATION';
+  | 'CONFIGURATION'
+  | 'OUTREACH_PLAN_BUILDER'
+  | 'OUTREACH_DRAFT_REVIEW'
+  | 'EXECUTION_MONITOR';
 
 export type SelectedView = 'HOME' | 'THREAD' | 'JOB';
 
 export type ActiveTab = 'THREADS' | 'JOBS';
 
-export type DraftStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'EDITED';
+export type DraftStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'EDITED' | 'SENT' | 'QUEUED_EXEC';

@@ -115,6 +115,29 @@ export const seedJobs: Job[] = [
     currentStage: 2,
   },
 
+  // ─── Outreach flow: Plan → Draft → Schedule → Monitor ──
+  {
+    id: 'job_outreach_01',
+    originThreadId: 'thread_outreach_01',
+    type: 'OUTREACH_SEQUENCE',
+    title: 'Draft reason-for-now outreach (8 leads)',
+    status: 'NEEDS_INPUT',
+    createdAt: '2026-02-10T09:44:10-08:00',
+    updatedAt: '2026-02-10T09:44:10-08:00',
+    scopeOutput: '8 leads → 12 drafts created, awaiting review',
+    inputs: {
+      leadIds: ['lead_01', 'lead_02', 'lead_03', 'lead_04', 'lead_05', 'lead_06', 'lead_07', 'lead_08'],
+      constraints: ['Connect-first sequence', 'Reason-for-now signals', 'Approval required'],
+    },
+    outputs: {
+      draftIds: ['odraft_01', 'odraft_02', 'odraft_03', 'odraft_04', 'odraft_05', 'odraft_06', 'odraft_07', 'odraft_08', 'odraft_09', 'odraft_10', 'odraft_11', 'odraft_12'],
+      summary: { draftsCreated: 12 },
+    },
+    evidenceId: 'ev_outreach_drafts_01',
+    progressStages: ['Building plan', 'Generating connect requests', 'Generating follow-ups', 'Generating emails', 'Quality check', 'Ready for review'],
+    currentStage: 5,
+  },
+
   // ─── Background: Completed (viewed) ─────────────────────
   {
     id: 'job_rerank_west_smb',

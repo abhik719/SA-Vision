@@ -12,11 +12,18 @@ interface Props {
 
 export default function JobResults({ evidence, hideHeader }: Props) {
   const selectedJobId = useAppStore((s) => s.selectedJobId);
+  const selectThread = useAppStore((s) => s.selectThread);
+  const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
   const job = useJobStore((s) =>
     selectedJobId ? s.jobsById[selectedJobId] : null
   );
-
   const summary = job?.outputs?.summary || evidence.summary || {};
+
+  const handleDraftOutreach = () => {
+    // Navigate to outreach plan builder
+    selectThread('thread_outreach_01');
+    setCurrentEvidence('ev_outreach_plan_01');
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -63,7 +70,7 @@ export default function JobResults({ evidence, hideHeader }: Props) {
               Next best actions
             </h4>
             <div className="flex flex-col gap-[8px]">
-              <Button size="sm">
+              <Button size="sm" onClick={handleDraftOutreach}>
                 <Send size={12} className="mr-[4px]" /> Draft outreach for
                 selected leads
               </Button>

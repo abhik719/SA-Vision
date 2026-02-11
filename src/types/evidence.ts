@@ -1,4 +1,5 @@
 import type { DraftStatus, EvidenceType } from './common';
+import type { OutreachPlan, OutreachDraft, LeadExecutionState, ExecutionEvent } from './outreach';
 
 export interface EvidenceColumn {
   key: string;
@@ -120,7 +121,7 @@ export interface JobTilePreview {
 
 export interface JobTileCta {
   label: string;
-  targetState: 'APPROVALS' | 'RESULTS' | 'PROGRESS' | 'CONFIG';
+  targetState: 'APPROVALS' | 'RESULTS' | 'PROGRESS' | 'CONFIG' | 'DRAFT_REVIEW' | 'EXECUTION';
 }
 
 export interface JobTile {
@@ -189,4 +190,14 @@ export interface Evidence {
   // CONFIGURATION
   configFields?: ConfigField[];
   previewLabel?: string;
+  // OUTREACH_PLAN_BUILDER
+  outreachPlan?: OutreachPlan;
+  leadListId?: string;
+  leadCount?: number;
+  // OUTREACH_DRAFT_REVIEW
+  outreachDrafts?: OutreachDraft[];
+  // EXECUTION_MONITOR
+  executionByLead?: LeadExecutionState[];
+  executionEvents?: ExecutionEvent[];
+  executionSummary?: { total: number; sent: number; waiting: number; replied: number };
 }

@@ -436,6 +436,121 @@ export const seedThreads: Thread[] = [
   },
 
   // ═══════════════════════════════════════════════════════
+  // OUTREACH FLOW: Plan → Draft → Schedule → Monitor
+  // From lead list → outreach plan builder → draft review
+  // ═══════════════════════════════════════════════════════
+  {
+    id: 'thread_outreach_01',
+    title: 'Outreach: Multi-thread top 8',
+    type: 'OUTREACH',
+    pinned: false,
+    scopeLabel: '8 leads',
+    needsReview: true,
+    scope: { territory: 'West SMB', segment: 'B2B SaaS' },
+    createdAt: '2026-02-10T09:40:00-08:00',
+    updatedAt: '2026-02-10T09:44:00-08:00',
+    decisionChips: ['Connect-first', 'Approval required', 'Max 20/day'],
+    spawnedJobIds: ['job_outreach_01'],
+    miniOutcome: '8 drafts ready for review',
+    progressLine: 'Plan approved • 8 drafts awaiting review',
+    keyActions: [
+      {
+        id: 'ka_o1',
+        type: 'preference',
+        title: 'Set outreach plan: connect-first',
+        subtitle: 'Day 0 connect, Day 1 LI message if accepted, Day 2 email if no reply • 9:41 AM',
+      },
+      {
+        id: 'ka_o2',
+        type: 'job_started',
+        title: 'Started: Draft outreach for 8 leads',
+        subtitle: 'Connection requests + follow-ups + emails • 9:42 AM',
+        linkLabel: 'Open job',
+        jobId: 'job_outreach_01',
+      },
+      {
+        id: 'ka_o3',
+        type: 'job_needs_review',
+        title: '12 drafts ready for review',
+        subtitle: '8 connect requests + 2 LI messages + 2 emails • 9:44 AM',
+        linkLabel: 'Review',
+        jobId: 'job_outreach_01',
+        evidenceId: 'ev_outreach_drafts_01',
+      },
+    ],
+    nextSuggestions: [
+      {
+        id: 'ns_o1',
+        title: 'Review and approve outreach drafts',
+        why: '12 drafts waiting — approve to schedule execution',
+        cta: 'Open',
+        prompt: 'Show me the draft review queue',
+      },
+      {
+        id: 'ns_o2',
+        title: 'Make drafts more concise and signal-driven',
+        why: 'Batch-edit all drafts with a single instruction',
+        cta: 'Run',
+        prompt: 'Make the connection requests shorter — under 40 words. Keep the signal hook.',
+      },
+    ],
+    askSuggestions: [
+      {
+        id: 'as_o1',
+        question: 'Which leads have the warmest path (mutual connections)?',
+        why: 'Helps prioritize who to reach out to first',
+      },
+      {
+        id: 'as_o2',
+        question: 'Can you add an InMail step for 3rd-degree connections?',
+        why: 'InMail works better for cold outreach to non-connections',
+      },
+    ],
+    messages: [
+      {
+        id: 'msg_o01',
+        role: 'agent',
+        timestamp: '2026-02-10T09:40:10-08:00',
+        content:
+          'Want me to suggest an outreach plan for these 8 leads? I can propose a sequence across LinkedIn + email, then draft the content for your approval.',
+      },
+      {
+        id: 'msg_o02',
+        role: 'seller',
+        timestamp: '2026-02-10T09:41:00-08:00',
+        content:
+          'Yes—connect first, then message if they accept. Keep it concise.',
+      },
+      {
+        id: 'msg_o03',
+        role: 'agent',
+        timestamp: '2026-02-10T09:42:00-08:00',
+        content:
+          'Proposed plan:\n• **Day 0:** Connection request (short, reason-for-now)\n• **If accepted → Day 1:** LinkedIn message\n• **If no response → Day 2:** Email (add to cadence)\n\nGuardrails: approval required, max 20/day, stop on reply.\nWant to change anything (timing, channels, follow-ups)?',
+        cardType: 'DECISION_CHIPS',
+        cardData: ['Connect-first', 'Approval required', 'Max 20/day'],
+      },
+      {
+        id: 'msg_o04',
+        role: 'seller',
+        timestamp: '2026-02-10T09:43:00-08:00',
+        content:
+          'Make email Day 2. Proceed to drafts.',
+      },
+      {
+        id: 'msg_o05',
+        role: 'agent',
+        timestamp: '2026-02-10T09:44:00-08:00',
+        content:
+          "Perfect. I generated drafts for the connection request + the follow-up message + the email, tailored per lead using their role + your reason-for-now. Review and approve, then I'll schedule execution.",
+        attachments: [
+          { type: 'EVIDENCE_LINK', evidenceId: 'ev_outreach_drafts_01', label: 'Review drafts (12)' },
+        ],
+      },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════
   // BACKGROUND THREADS
   // ═══════════════════════════════════════════════════════
 
