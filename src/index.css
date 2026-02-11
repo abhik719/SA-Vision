@@ -1,0 +1,84 @@
+@import './styles/theme.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: 'Community', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+      sans-serif;
+    color: var(--text-primary);
+    background: var(--background-secondary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  /* Focus ring for accessibility */
+  :focus-visible {
+    outline: 2px solid var(--linkedin-blue);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Horizontal divider */
+  .li-divider-h {
+    height: 1px;
+    width: 100%;
+    background: var(--border-standard);
+  }
+
+  /* Vertical divider */
+  .li-divider-v {
+    width: 1px;
+    height: 100%;
+    background: var(--border-standard);
+  }
+
+  /* Card base */
+  .li-card {
+    background: white;
+    border-radius: 8px;
+    position: relative;
+  }
+
+  .li-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    pointer-events: none;
+  }
+
+  /* Scrollbar styling */
+  .li-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .li-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .li-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+  }
+
+  .li-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.35);
+  }
+}

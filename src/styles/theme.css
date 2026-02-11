@@ -1,0 +1,146 @@
+/* ===== LinkedIn Font Faces ===== */
+
+/* Community (standard weight set) */
+@font-face {
+  font-family: 'Community';
+  src: url('/fonts/Community-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Community';
+  src: url('/fonts/Community-LightItalic.otf') format('opentype');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Community';
+  src: url('/fonts/Community-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Community';
+  src: url('/fonts/Community-Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Community';
+  src: url('/fonts/Community-Semibold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Community';
+  src: url('/fonts/Community-SemiboldItalic.otf') format('opentype');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Community Pro (bold) */
+@font-face {
+  font-family: 'Community Pro';
+  src: url('/fonts/CommunityPro-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Alias: also register Community Pro at normal weights so the brand
+   font-family can resolve the regular Community files too */
+@font-face {
+  font-family: 'Community Pro';
+  src: url('/fonts/Community-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Community Pro';
+  src: url('/fonts/Community-Semibold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ===== LinkedIn Sales Navigator Design System Tokens ===== */
+:root {
+  /* Brand Colors */
+  --linkedin-blue: #0A66C2;
+  --linkedin-blue-dark: #004182;
+  --linkedin-blue-light: #378FE9;
+
+  /* Text Colors */
+  --text-primary: rgba(0, 0, 0, 0.9);
+  --text-secondary: rgba(0, 0, 0, 0.75);
+  --text-tertiary: rgba(0, 0, 0, 0.6);
+  --text-disabled: rgba(0, 0, 0, 0.3);
+
+  /* Success */
+  --success-primary: #2F7B15;
+  --success-background: #EDF3F8;
+
+  /* Backgrounds */
+  --background-primary: #FFFFFF;
+  --background-secondary: #F3F2EF;
+  --background-tertiary: #EDF3F8;
+  --background-hover: #EDF3F8;
+  --background-selected: #EDF3F8;
+
+  /* Borders & Dividers */
+  --border-subtle: rgba(140, 140, 140, 0.2);
+  --border-standard: rgba(0, 0, 0, 0.08);
+  --border-emphasis: rgba(0, 0, 0, 0.3);
+
+  /* Tag Backgrounds */
+  --tag-background: rgba(0, 0, 0, 0.08);
+  --tag-beta: #DDE7F1;
+  --tag-crm: #EDF3F8;
+
+  /* Spacing */
+  --space-2: 2px;
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-48: 48px;
+
+  /* Layout */
+  --sidebar-width: 318px;
+  --nav-height: 56px;
+  --max-container: 1440px;
+  --evidence-max-width: 1120px;
+  --evidence-gutter: 24px;
+  --evidence-padding-x: 24px;
+  --evidence-padding-top: 16px;
+  --evidence-padding-bottom: 24px;
+
+  /* Vertical Rhythm (header stack) */
+  --rhythm-breadcrumb-title: 8px;
+  --rhythm-title-meta: 8px;
+  --rhythm-header-section: 16px;
+  --rhythm-section-section: 24px;
+
+  /* Semantic Status Colors */
+  --status-queued: #0A66C2;
+  --status-running: #E7A33E;
+  --status-needs-approval: #C37D16;
+  --status-completed: #2F7B15;
+  --status-failed: #CC1016;
+  --status-cancelled: #666666;
+}
