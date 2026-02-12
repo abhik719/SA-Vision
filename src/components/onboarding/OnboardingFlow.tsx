@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { Zap, Send, Paperclip, ArrowLeft, Check, Database } from 'lucide-react';
+import { Zap, Send, Paperclip, ArrowLeft, Check } from 'lucide-react';
 import inlogoPng from '../../assets/Inlogo.png';
 import { useAppStore } from '../../store/useAppStore';
 import { useJobStore } from '../../store/useJobStore';
@@ -227,18 +227,6 @@ function MissionCard({
 }
 
 // ─── Preferences Step 1: Territory ───────────────────────────
-
-function CrmToggle() {
-  const [on, setOn] = useState(true);
-  return (
-    <button
-      onClick={() => setOn((v) => !v)}
-      className={`relative h-[20px] w-[36px] shrink-0 rounded-full transition-colors ${on ? 'bg-li-blue' : 'bg-[#ccc]'}`}
-    >
-      <span className={`absolute top-[2px] h-[16px] w-[16px] rounded-full bg-white shadow-sm transition-transform ${on ? 'left-[18px]' : 'left-[2px]'}`} />
-    </button>
-  );
-}
 
 function PrefsTerritory({
   territory,

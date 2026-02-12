@@ -265,7 +265,7 @@ export interface DiscoveryLeadRow {
   title: string;
   company: string;
   signal: string;
-  signalType: 'job_change' | 'engagement' | 'intent' | 'tech_stack';
+  signalType: 'job_change' | 'engagement' | 'intent' | 'tech_stack' | 'expansion';
   rationale: string;
   score: number;
   signals?: string[];

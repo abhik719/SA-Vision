@@ -2591,7 +2591,7 @@ function transitionToSignalFilters(jobId: string, intentKey: string) {
 
 /** Apply a discovery filter to leads and ask the next question */
 function flowDiscoverLeadDimension(jobId: string, filterTag: string) {
-  const { setEvidence: setEv, updateEvidence } = useEvidenceStore.getState();
+  const { setEvidence: setEv } = useEvidenceStore.getState();
   const job = useJobStore.getState().jobsById[jobId];
   const intentKey = job?.scope?.intentKey || '';
   const config = CARD_CONFIG[intentKey];
