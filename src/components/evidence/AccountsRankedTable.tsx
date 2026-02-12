@@ -61,7 +61,7 @@ export default function AccountsRankedTable({ evidence, hideHeader }: Props) {
           onChange={toggleAll}
           className="accent-li-blue"
         />
-        <span className="font-body text-[13px] text-li-text-secondary">
+        <span className="font-body text-ds-small text-li-text-secondary">
           {selectedRows.size > 0
             ? `${selectedRows.size} selected`
             : `${rows.length} results`}

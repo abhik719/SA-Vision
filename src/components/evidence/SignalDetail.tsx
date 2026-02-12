@@ -1,5 +1,6 @@
 import type { Evidence, SignalCtaAction } from '../../types/evidence';
 import { useCreateJobFromPrompt } from '../../hooks/useCreateJobFromPrompt';
+import { TERMS } from '../../constants/terms';
 import Button from '../ui/Button';
 import Facepile from '../ui/Facepile';
 import LogoPile from '../ui/LogoPile';
@@ -44,7 +45,7 @@ export default function SignalDetail({ evidence }: Props) {
     const prompts: Record<string, string> = {
       FIND_PEOPLE: `Find people: ${cta.label}`,
       CREATE_OUTREACH: `Draft outreach: ${cta.label}`,
-      INTERNAL_ACTION: `Run job: ${cta.label}`,
+      INTERNAL_ACTION: `${TERMS.RUN_PLAY}: ${cta.label}`,
     };
     createFromPrompt(prompts[cta.actionType] || cta.label);
   };

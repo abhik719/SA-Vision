@@ -1,5 +1,6 @@
 import { useState, Fragment } from 'react';
 import type { Evidence, LeadRow } from '../../types/evidence';
+import { TERMS } from '../../constants/terms';
 import EvidenceHeader from './EvidenceHeader';
 import SignalPill from '../ui/SignalPill';
 import Button from '../ui/Button';
@@ -53,7 +54,7 @@ export default function LeadsTable({ evidence, hideHeader }: Props) {
     <div className="flex h-full flex-col">
       {!hideHeader && (
         <EvidenceHeader
-          breadcrumb={evidence.context?.jobId ? `Job • Results` : 'Evidence'}
+          breadcrumb={evidence.context?.jobId ? TERMS.PLAY_RESULTS : 'Evidence'}
           title={evidence.title}
         />
       )}
@@ -75,7 +76,7 @@ export default function LeadsTable({ evidence, hideHeader }: Props) {
               <th className="w-[28px]" />
               <th colSpan={5} className="px-[12px] py-[8px] text-left">
                 <div className="flex items-center gap-[8px]">
-                  <span className="font-body text-[13px] text-li-text-secondary">
+                  <span className="font-body text-ds-small text-li-text-secondary">
                     {hasSelection
                       ? `${selectedRows.size} selected`
                       : `${rows.length} lead${rows.length !== 1 ? 's' : ''}`}
@@ -88,7 +89,7 @@ export default function LeadsTable({ evidence, hideHeader }: Props) {
                   ) : (
                     <button
                       onClick={handleStartOutreachPlan}
-                      className="flex items-center gap-[4px] rounded-[6px] bg-li-blue px-[10px] py-[4px] font-body text-[12px] font-medium text-white transition-colors hover:bg-li-blue-dark"
+                      className="flex items-center gap-[4px] rounded-[6px] bg-li-blue px-[10px] py-[4px] font-body text-ds-small font-semibold text-white transition-colors hover:bg-li-blue-dark"
                     >
                       <Send size={12} />
                       Start outreach plan

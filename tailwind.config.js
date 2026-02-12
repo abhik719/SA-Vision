@@ -26,6 +26,13 @@ export default {
         'li-success-bg': '#EDF3F8',
       },
       fontFamily: {
+        sans: [
+          'Community',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'sans-serif',
+        ],
         display: [
           'Community',
           '-apple-system',
@@ -57,11 +64,11 @@ export default {
         ],
       },
       fontSize: {
-        'ds-display': ['24px', { lineHeight: '1.25', letterSpacing: '0.36px' }],
-        'ds-heading': ['20px', { lineHeight: '1.25', letterSpacing: '0.38px' }],
-        'ds-large': ['16px', { lineHeight: '1.25', letterSpacing: '-0.32px' }],
-        'ds-base': ['14px', { lineHeight: '1.25', letterSpacing: '-0.15px' }],
-        'ds-small': ['12px', { lineHeight: '1.25', letterSpacing: '-0.15px' }],
+        'ds-display': ['24px', { lineHeight: '1.33' }],
+        'ds-heading': ['20px', { lineHeight: '1.4' }],
+        'ds-large': ['16px', { lineHeight: '1.5' }],
+        'ds-base': ['14px', { lineHeight: '1.43' }],
+        'ds-small': ['12px', { lineHeight: '1.33' }],
       },
       spacing: {
         'ds-2': '2px',

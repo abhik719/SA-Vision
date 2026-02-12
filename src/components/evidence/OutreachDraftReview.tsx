@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useOutreachStore } from '../../store/useOutreachStore';
 import { useJobStore } from '../../store/useJobStore';
-import { useEvidenceStore } from '../../store/useEvidenceStore';
-import { useAppStore } from '../../store/useAppStore';
+// import { useEvidenceStore } from '../../store/useEvidenceStore';
+// import { useAppStore } from '../../store/useAppStore';
+import { processSellerMessage } from '../../flows/engine';
 import type { Evidence } from '../../types/evidence';
 import type { OutreachDraft } from '../../types/outreach';
 import {
@@ -29,12 +30,14 @@ const STEP_ICONS: Record<string, typeof Mail> = {
   step_01: UserPlus,
   step_02: MessageSquare,
   step_03: Mail,
+  step_04: Linkedin,
 };
 
 const STEP_LABELS: Record<string, string> = {
   step_01: 'Connection request',
   step_02: 'LinkedIn message',
   step_03: 'Email',
+  step_04: 'InMail',
 };
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -53,11 +56,11 @@ export default function OutreachDraftReview({ evidence }: Props) {
   const updateDraftBody = useOutreachStore((s) => s.updateDraftBody);
   const updateDraftSubject = useOutreachStore((s) => s.updateDraftSubject);
   const approveAllDrafts = useOutreachStore((s) => s.approveAllDrafts);
-  const setJobStatus = useJobStore((s) => s.setJobStatus);
-  const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
+  // const setJobStatus = useJobStore((s) => s.setJobStatus);
+  // const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
   const addMessage = useJobStore((s) => s.addMessage);
-  const setJobEvidence = useJobStore((s) => s.setJobEvidence);
-  const updateEvidence = useEvidenceStore((s) => s.updateEvidence);
+  // const setJobEvidence = useJobStore((s) => s.setJobEvidence);
+  // const updateEvidence = useEvidenceStore((s) => s.updateEvidence);
 
   const [selectedDraftId, setSelectedDraftId] = useState<string | null>(null);
   const [filterStep, setFilterStep] = useState<string | null>(null);
@@ -77,6 +80,14 @@ export default function OutreachDraftReview({ evidence }: Props) {
 
   const selectedDraft = drafts.find((d) => d.id === selectedDraftId) || filteredDrafts[0];
   const selectedLead = selectedDraft ? leadsById[selectedDraft.leadId] : null;
+
+  // Auto-populate editing state when default selection is used (no explicit click yet)
+  useEffect(() => {
+    if (!selectedDraftId && selectedDraft) {
+      setEditingBody(selectedDraft.body);
+      setEditingSubject(selectedDraft.subject || '');
+    }
+  }, [selectedDraftId, selectedDraft]);
 
   const approvedCount = drafts.filter((d) => d.status === 'APPROVED').length;
   const allApproved = approvedCount === drafts.length && drafts.length > 0;
@@ -155,30 +166,27 @@ export default function OutreachDraftReview({ evidence }: Props) {
 
   const handleApproveAll = () => {
     approveAllDrafts();
+    // Post to chat so the action is visible
+    const parentJobId = evidence.context?.jobId || jobId;
+    addMessage(parentJobId, {
+      id: `msg_approve_all_${Date.now()}`,
+      role: 'seller',
+      timestamp: new Date().toISOString(),
+      content: `Approved all ${drafts.length} drafts`,
+    });
   };
 
   const handleSchedule = () => {
-    setJobStatus(jobId, 'COMPLETED');
-    setJobEvidence(jobId, 'ev_outreach_exec_01');
-
-    updateEvidence('ev_outreach_exec_01', {
-      executionSummary: { total: drafts.length, sent: 0, waiting: 0, replied: 0 },
+    // Route through the engine so it handles chat + navigation
+    const parentJobId = evidence.context?.jobId || jobId;
+    const msg = 'Approve all drafts and schedule outreach';
+    addMessage(parentJobId, {
+      id: `msg_${Date.now()}`,
+      role: 'seller',
+      timestamp: new Date().toISOString(),
+      content: msg,
     });
-
-    const parentJobId = evidence.context?.jobId;
-    if (parentJobId) {
-      addMessage(parentJobId, {
-        id: `msg_schedule_${Date.now()}`,
-        role: 'agent',
-        timestamp: new Date().toISOString(),
-        content: `All ${drafts.length} drafts approved! Ready to schedule the outreach sequence. Confirm timing and I'll start sending.`,
-        attachments: [{ type: 'EVIDENCE_LINK', evidenceId: 'ev_outreach_exec_01', label: 'Schedule & run' }],
-      });
-    }
-
-    setTimeout(() => {
-      setCurrentEvidence('ev_outreach_exec_01');
-    }, 300);
+    setTimeout(() => processSellerMessage(parentJobId, msg), 100);
   };
 
   return (
@@ -186,7 +194,7 @@ export default function OutreachDraftReview({ evidence }: Props) {
       {/* Top bar */}
       <div className="flex items-center justify-between border-b border-li-border-standard px-[16px] py-[10px]">
         <div className="flex items-center gap-[10px]">
-          <h3 className="font-display text-[14px] font-semibold text-li-text-primary">
+          <h3 className="font-display text-ds-base font-semibold text-li-text-primary">
             Review drafts ({drafts.length})
           </h3>
           <span className="font-body text-[12px] text-li-text-tertiary">
@@ -197,7 +205,7 @@ export default function OutreachDraftReview({ evidence }: Props) {
           <button
             onClick={handleApproveAll}
             disabled={allApproved}
-            className="flex items-center gap-[4px] rounded-[6px] bg-green-600 px-[12px] py-[6px] font-body text-[12px] font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-40"
+            className="flex items-center gap-[4px] rounded-[6px] bg-green-600 px-[12px] py-[6px] font-body text-ds-small font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-40"
           >
             <CheckCheck size={14} />
             Approve all
@@ -209,7 +217,7 @@ export default function OutreachDraftReview({ evidence }: Props) {
       <div className="flex items-center gap-[6px] border-b border-li-border-standard px-[16px] py-[8px]">
         <button
           onClick={() => setFilterStep(null)}
-          className={`rounded-[6px] px-[8px] py-[3px] font-body text-[11px] transition-colors ${
+          className={`rounded-[6px] px-[8px] py-[3px] font-body text-ds-small transition-colors ${
             !filterStep ? 'bg-li-blue text-white' : 'bg-li-bg-tertiary text-li-text-tertiary hover:bg-li-bg-hover'
           }`}
         >
@@ -221,7 +229,7 @@ export default function OutreachDraftReview({ evidence }: Props) {
             <button
               key={stepId}
               onClick={() => setFilterStep(stepId === filterStep ? null : stepId)}
-              className={`flex items-center gap-[4px] rounded-[6px] px-[8px] py-[3px] font-body text-[11px] transition-colors ${
+              className={`flex items-center gap-[4px] rounded-[6px] px-[8px] py-[3px] font-body text-ds-small transition-colors ${
                 filterStep === stepId ? 'bg-li-blue text-white' : 'bg-li-bg-tertiary text-li-text-tertiary hover:bg-li-bg-hover'
               }`}
             >
@@ -239,20 +247,20 @@ export default function OutreachDraftReview({ evidence }: Props) {
             <div className="flex items-center gap-[8px]">
               <CheckCheck size={16} className="text-green-600" />
               <div>
-                <div className="font-body text-[13px] font-semibold text-green-800">
+                <div className="font-body text-ds-small font-semibold text-green-800">
                   All drafts approved — ready to schedule
                 </div>
-                <div className="font-body text-[11px] text-green-600">
+                <div className="font-body text-ds-small text-green-600">
                   {drafts.length} drafts across {Object.keys(stepCounts).length} steps
                 </div>
               </div>
             </div>
             <button
               onClick={handleSchedule}
-              className="flex items-center gap-[6px] rounded-[8px] bg-li-blue px-[14px] py-[7px] font-body text-[12px] font-medium text-white transition-colors hover:bg-li-blue-dark"
+              className="flex items-center gap-[6px] rounded-[8px] bg-li-blue px-[14px] py-[7px] font-body text-ds-small font-semibold text-white transition-colors hover:bg-li-blue-dark"
             >
               <Calendar size={14} />
-              Schedule outreach job
+              Schedule outreach
             </button>
           </div>
         </div>
@@ -288,7 +296,7 @@ export default function OutreachDraftReview({ evidence }: Props) {
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <div className="truncate font-body text-[12px] font-medium text-li-text-primary">
+                    <div className="truncate font-body text-ds-small font-semibold text-li-text-primary">
                       {lead?.fullName || draft.leadId}
                     </div>
                     <div className="flex items-center gap-[4px]">
@@ -298,7 +306,7 @@ export default function OutreachDraftReview({ evidence }: Props) {
                       </span>
                     </div>
                   </div>
-                  <span className={`shrink-0 rounded-[4px] px-[4px] py-[1px] font-body text-[9px] font-medium ${status.bg} ${status.text}`}>
+                  <span className={`shrink-0 rounded-[4px] px-[4px] py-[1px] font-body text-[10px] font-semibold ${status.bg} ${status.text}`}>
                     {status.label}
                   </span>
                 </div>
@@ -322,15 +330,15 @@ export default function OutreachDraftReview({ evidence }: Props) {
                         className="h-[36px] w-[36px] rounded-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-li-blue/10 text-[13px] font-semibold text-li-blue">
+                      <div className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-li-blue/10 text-ds-small font-semibold text-li-blue">
                         {selectedLead.fullName.split(' ').map(n => n[0]).join('')}
                       </div>
                     )}
                     <div>
-                      <div className="font-body text-[13px] font-semibold text-li-text-primary">
+                      <div className="font-body text-ds-small font-semibold text-li-text-primary">
                         {selectedLead.fullName}
                       </div>
-                      <div className="font-body text-[11px] text-li-text-tertiary">
+                      <div className="font-body text-ds-small text-li-text-tertiary">
                         {selectedLead.title} · {selectedLead.company.name} · {selectedLead.connectionDegree}
                       </div>
                     </div>
@@ -339,7 +347,7 @@ export default function OutreachDraftReview({ evidence }: Props) {
                   {selectedLead.warmPath && (
                     <div className="mt-[6px] flex items-center gap-[4px]">
                       <Linkedin size={11} className="text-li-blue" />
-                      <span className="font-body text-[11px] text-li-text-tertiary">
+                      <span className="font-body text-ds-small text-li-text-tertiary">
                         Mutual: <span className="text-li-text-secondary">{selectedLead.warmPath.name}</span> ({selectedLead.warmPath.degree})
                       </span>
                     </div>
@@ -360,10 +368,10 @@ export default function OutreachDraftReview({ evidence }: Props) {
               <div className="flex-1 px-[20px] py-[12px]">
                 <div className="flex items-center gap-[6px] mb-[8px]">
                   {(() => { const SI = STEP_ICONS[selectedDraft.stepId] || Mail; return <SI size={14} className="text-li-text-tertiary" />; })()}
-                  <span className="font-body text-[12px] font-medium text-li-text-secondary">
+                  <span className="font-body text-ds-small font-semibold text-li-text-secondary">
                     {STEP_LABELS[selectedDraft.stepId] || selectedDraft.stepId}
                   </span>
-                  <span className={`ml-auto rounded-[4px] px-[6px] py-[2px] font-body text-[10px] font-medium ${STATUS_STYLES[selectedDraft.status].bg} ${STATUS_STYLES[selectedDraft.status].text}`}>
+                  <span className={`ml-auto rounded-[4px] px-[6px] py-[2px] font-body text-[10px] font-semibold ${STATUS_STYLES[selectedDraft.status].bg} ${STATUS_STYLES[selectedDraft.status].text}`}>
                     {STATUS_STYLES[selectedDraft.status].label}
                   </span>
                 </div>
@@ -386,25 +394,25 @@ export default function OutreachDraftReview({ evidence }: Props) {
                       updateDraftBody(selectedDraft.id, editingBody);
                     }
                   }}
-                  className="min-h-[140px] w-full resize-none rounded-[8px] border border-li-border-standard p-[12px] font-body text-[13px] leading-relaxed text-li-text-primary placeholder:text-li-text-disabled focus:border-li-blue focus:outline-none focus:ring-1 focus:ring-li-blue/20"
+                  className="min-h-[140px] w-full resize-none rounded-[8px] border border-li-border-standard p-[12px] font-body text-ds-base leading-relaxed text-li-text-primary placeholder:text-li-text-disabled focus:border-li-blue focus:outline-none focus:ring-1 focus:ring-li-blue/20"
                 />
                 {/* Quick transforms */}
                 <div className="mt-[8px] flex items-center gap-[6px]">
                   <button
                     onClick={() => handleQuickTransform('shorter')}
-                    className="rounded-[6px] border border-li-border-standard px-[10px] py-[5px] font-body text-[11px] text-li-text-tertiary transition-colors hover:bg-li-bg-hover hover:text-li-text-secondary"
+                    className="rounded-[6px] border border-li-border-standard px-[10px] py-[5px] font-body text-ds-small text-li-text-tertiary transition-colors hover:bg-li-bg-hover hover:text-li-text-secondary"
                   >
                     Use shorter
                   </button>
                   <button
                     onClick={() => handleQuickTransform('direct')}
-                    className="rounded-[6px] border border-li-border-standard px-[10px] py-[5px] font-body text-[11px] text-li-text-tertiary transition-colors hover:bg-li-bg-hover hover:text-li-text-secondary"
+                    className="rounded-[6px] border border-li-border-standard px-[10px] py-[5px] font-body text-ds-small text-li-text-tertiary transition-colors hover:bg-li-bg-hover hover:text-li-text-secondary"
                   >
                     More direct
                   </button>
                   <button
                     onClick={handleRewrite}
-                    className="flex items-center gap-[4px] rounded-[6px] border border-li-border-standard px-[10px] py-[5px] font-body text-[11px] text-li-text-tertiary transition-colors hover:bg-li-bg-hover hover:text-li-text-secondary"
+                    className="flex items-center gap-[4px] rounded-[6px] border border-li-border-standard px-[10px] py-[5px] font-body text-ds-small text-li-text-tertiary transition-colors hover:bg-li-bg-hover hover:text-li-text-secondary"
                   >
                     <RotateCcw size={11} />
                     Request rewrite
@@ -414,21 +422,21 @@ export default function OutreachDraftReview({ evidence }: Props) {
 
               {/* Action buttons */}
               <div className="flex items-center justify-between border-t border-li-border-standard px-[20px] py-[10px]">
-                <div className="flex items-center gap-[4px] font-body text-[11px] text-li-text-disabled">
+                <div className="flex items-center gap-[4px] font-body text-ds-small text-li-text-disabled">
                   <Shield size={11} />
                   Approval required before send
                 </div>
                 <div className="flex items-center gap-[6px]">
                   <button
                     onClick={handleReject}
-                    className="flex items-center gap-[4px] rounded-[6px] border border-li-border-standard px-[12px] py-[6px] font-body text-[12px] text-li-text-tertiary transition-colors hover:bg-red-50 hover:text-red-600"
+                    className="flex items-center gap-[4px] rounded-[6px] border border-li-border-standard px-[12px] py-[6px] font-body text-ds-small text-li-text-tertiary transition-colors hover:bg-red-50 hover:text-red-600"
                   >
                     <X size={13} />
                     Reject
                   </button>
                   <button
                     onClick={handleApprove}
-                    className="flex items-center gap-[4px] rounded-[6px] bg-green-600 px-[12px] py-[6px] font-body text-[12px] font-medium text-white transition-colors hover:bg-green-700"
+                    className="flex items-center gap-[4px] rounded-[6px] bg-green-600 px-[12px] py-[6px] font-body text-ds-small font-semibold text-white transition-colors hover:bg-green-700"
                   >
                     <Check size={13} />
                     Approve
@@ -439,7 +447,7 @@ export default function OutreachDraftReview({ evidence }: Props) {
                         const nextIdx = filteredDrafts.findIndex((d) => d.id === selectedDraft.id) + 1;
                         if (nextIdx < filteredDrafts.length) handleSelectDraft(filteredDrafts[nextIdx]);
                       }}
-                      className="flex items-center gap-[4px] rounded-[6px] border border-li-border-standard px-[10px] py-[6px] font-body text-[11px] text-li-text-tertiary transition-colors hover:bg-li-bg-hover"
+                      className="flex items-center gap-[4px] rounded-[6px] border border-li-border-standard px-[10px] py-[6px] font-body text-ds-small text-li-text-tertiary transition-colors hover:bg-li-bg-hover"
                     >
                       Next <ArrowRight size={11} />
                     </button>
@@ -451,7 +459,7 @@ export default function OutreachDraftReview({ evidence }: Props) {
             <div className="flex flex-1 items-center justify-center">
               <div className="text-center">
                 <MessageSquare size={32} className="mx-auto text-li-text-disabled" />
-                <p className="mt-[8px] font-body text-[13px] text-li-text-tertiary">
+                <p className="mt-[8px] font-body text-ds-small text-li-text-tertiary">
                   Select a draft to review
                 </p>
               </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Evidence } from '../../types/evidence';
+import { TERMS } from '../../constants/terms';
 import type { SignalFeedbackCardData, SignalFeedbackOption } from '../../types/thread';
 import { useAppStore } from '../../store/useAppStore';
 import { useJobStore } from '../../store/useJobStore';
@@ -8,7 +9,7 @@ import StartPointChips from './StartPointChips';
 import SectionHeader from './SectionHeader';
 import SignalCardComponent from './SignalCardComponent';
 import JobTileComponent from './JobTileComponent';
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageCircle, ArrowRight } from 'lucide-react';
 
 interface Props {
   evidence: Evidence;
@@ -18,12 +19,16 @@ export default function AgentHome({ evidence }: Props) {
   const selectJob = useAppStore((s) => s.selectJob);
   const createJob = useJobStore((s) => s.createJob);
   const addMessage = useJobStore((s) => s.addMessage);
+  const jobsById = useJobStore((s) => s.jobsById);
   const [feedbackGiven, setFeedbackGiven] = useState<'up' | 'down' | null>(null);
 
   const placeholders = evidence.inputPlaceholders || [];
   const chips = evidence.chips || [];
   const signalCards = evidence.signalCards || [];
-  const jobTiles = evidence.jobTiles || [];
+  const allJobTiles = evidence.jobTiles || [];
+
+  // Only show tiles for jobs that actually exist in the store
+  const jobTiles = allJobTiles.filter((t) => !!jobsById[t.jobId]);
 
   const visibleTiles = jobTiles.slice(0, 4);
   const hasMore = jobTiles.length > 4;
@@ -158,11 +163,15 @@ export default function AgentHome({ evidence }: Props) {
           {/* Right: Jobs that need your attention */}
           <div className="flex flex-col gap-[16px]">
             <SectionHeader
-              title="Jobs that need your attention"
-              subtitle="Jobs, approvals, and follow-ups waiting on you."
+              title={TERMS.PLAYS_NEED_ATTENTION}
+              subtitle={TERMS.PLAYS_NEED_ATTENTION_SUB}
             />
             <div className="flex flex-col gap-[10px]">
-              {visibleTiles.length === 0 && (
+              {/* Calling Attention tile — shows after play is submitted */}
+              {localStorage.getItem('sa.onboarding_completed') === 'true' && (
+                <CallingAttentionTile />
+              )}
+              {visibleTiles.length === 0 && localStorage.getItem('sa.onboarding_completed') !== 'true' && (
                 <div className="li-card flex items-center justify-center p-[16px]">
                   <span className="font-body text-ds-small text-li-text-tertiary">
                     Nothing waiting on you right now.
@@ -176,12 +185,47 @@ export default function AgentHome({ evidence }: Props) {
                 <button
                   className="self-start font-body text-ds-small font-semibold text-li-blue hover:underline"
                 >
-                  See all jobs
+                  {TERMS.SEE_ALL_PLAYS}
                 </button>
               )}
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Calling Attention Tile ──────────────────────────────────
+
+function CallingAttentionTile() {
+  return (
+    <div className="li-card flex flex-col gap-[8px] p-[14px] transition-shadow hover:shadow-sm">
+      {/* Row 1: Title + count badge */}
+      <div className="flex items-center gap-[8px]">
+        <span className="flex-1 font-body text-ds-base font-semibold text-li-text-primary leading-snug">
+          2 replies received from your outreach
+        </span>
+        <span className="shrink-0 flex items-center gap-[4px] rounded-[4px] bg-li-blue/10 px-[8px] py-[2px] font-body text-ds-small font-semibold text-li-blue">
+          <MessageCircle size={12} />
+          2 new
+        </span>
+      </div>
+
+      {/* Row 2: Details */}
+      <p className="font-body text-ds-small text-li-text-secondary leading-relaxed">
+        <span className="font-medium text-li-text-primary">Sarah Chen</span> (VP Revenue Ops, Acme) and <span className="font-medium text-li-text-primary">Marcus Rivera</span> (CRO, Nimbus) responded to your connection requests.
+      </p>
+
+      {/* Row 3: CTA */}
+      <div className="flex items-center justify-end pt-[2px]">
+        <button
+          onClick={(e) => e.preventDefault()}
+          className="flex items-center gap-[4px] rounded-ds-button bg-li-blue px-[14px] py-[5px] font-body text-ds-small font-semibold text-white transition-colors hover:bg-li-blue-dark"
+        >
+          Review replies
+          <ArrowRight size={13} />
+        </button>
       </div>
     </div>
   );

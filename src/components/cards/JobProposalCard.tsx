@@ -1,5 +1,6 @@
 import type { JobProposalCardData } from '../../types/thread';
 import { useAppStore } from '../../store/useAppStore';
+import { TERMS } from '../../constants/terms';
 import { useJobStore } from '../../store/useJobStore';
 import { useEvidenceStore } from '../../store/useEvidenceStore';
 import Button from '../ui/Button';
@@ -31,7 +32,7 @@ export default function JobProposalCard({ data, jobId }: Props) {
       generatedAt: now,
       stages: ['Initializing', 'Scanning data', 'Processing', 'Finalizing', 'Complete'],
       currentStage: 0,
-      log: [{ time: new Date().toLocaleTimeString(), message: 'Job started' }],
+      log: [{ time: new Date().toLocaleTimeString(), message: TERMS.PLAY_STARTED }],
     });
 
     createJobDirect({
@@ -114,7 +115,7 @@ export default function JobProposalCard({ data, jobId }: Props) {
 
         <div className="flex items-center gap-[8px]">
           <Button onClick={handleRun} size="sm">
-            <Play size={12} className="mr-[4px]" /> Run job
+            <Play size={12} className="mr-[4px]" /> {TERMS.RUN_PLAY}
           </Button>
           <Button variant="secondary" size="sm">
             <Settings size={12} className="mr-[4px]" /> Edit inputs
@@ -146,7 +147,7 @@ function simulateJobProgress(
     updateEvidence(evidenceId, {
       currentStage: 1,
       log: [
-        { time: new Date().toLocaleTimeString(), message: 'Job started' },
+        { time: new Date().toLocaleTimeString(), message: TERMS.PLAY_STARTED },
         { time: new Date().toLocaleTimeString(), message: 'Scanning data...' },
       ],
     });
@@ -157,7 +158,7 @@ function simulateJobProgress(
     updateEvidence(evidenceId, {
       currentStage: 2,
       log: [
-        { time: new Date().toLocaleTimeString(), message: 'Job started' },
+        { time: new Date().toLocaleTimeString(), message: TERMS.PLAY_STARTED },
         { time: new Date().toLocaleTimeString(), message: 'Scanning data...' },
         { time: new Date().toLocaleTimeString(), message: 'Processing results...' },
       ],
@@ -169,7 +170,7 @@ function simulateJobProgress(
     updateEvidence(evidenceId, {
       currentStage: 3,
       log: [
-        { time: new Date().toLocaleTimeString(), message: 'Job started' },
+        { time: new Date().toLocaleTimeString(), message: TERMS.PLAY_STARTED },
         { time: new Date().toLocaleTimeString(), message: 'Scanning data...' },
         { time: new Date().toLocaleTimeString(), message: 'Processing results...' },
         { time: new Date().toLocaleTimeString(), message: 'Finalizing...' },
@@ -183,7 +184,7 @@ function simulateJobProgress(
     if (needsApproval) {
       setJobStatus(childJobId, 'NEEDS_INPUT');
     } else {
-      setJobStatus(childJobId, 'COMPLETED');
+      setJobStatus(childJobId, 'READY_TO_REVIEW');
       updateJob(childJobId, { has_unread_results: true });
     }
     updateJobProgress(childJobId, 4);
@@ -200,8 +201,8 @@ function simulateJobProgress(
       role: 'agent',
       timestamp: new Date().toISOString(),
       content: needsApproval
-        ? `Job "${data.jobName}" is ready for your review.`
-        : `Job "${data.jobName}" completed successfully.`,
+        ? `${TERMS.PLAY_SINGULAR} "${data.jobName}" is ready for your review.`
+        : `${TERMS.PLAY_SINGULAR} "${data.jobName}" completed successfully.`,
       cardType: 'JOB_RESULT',
       cardData: {
         jobId: childJobId,

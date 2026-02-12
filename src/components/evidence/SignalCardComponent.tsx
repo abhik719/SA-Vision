@@ -1,5 +1,6 @@
 import type { SignalCard, SignalCtaAction } from '../../types/evidence';
 import { useCreateJobFromPrompt } from '../../hooks/useCreateJobFromPrompt';
+import { TERMS } from '../../constants/terms';
 import { useAppStore } from '../../store/useAppStore';
 import { useJobStore } from '../../store/useJobStore';
 import { useEvidenceStore } from '../../store/useEvidenceStore';
@@ -37,7 +38,7 @@ export default function SignalCardComponent({ card }: Props) {
     const prompts: Record<string, string> = {
       FIND_PEOPLE: `Find people: ${cta.label}`,
       CREATE_OUTREACH: `Draft outreach: ${cta.label}`,
-      INTERNAL_ACTION: `Run job: ${cta.label}`,
+      INTERNAL_ACTION: `${TERMS.RUN_PLAY}: ${cta.label}`,
     };
     createFromPrompt(prompts[cta.actionType] || cta.label);
   };
@@ -84,7 +85,7 @@ export default function SignalCardComponent({ card }: Props) {
           <span className="font-body text-[10px] font-semibold uppercase tracking-wider text-li-text-tertiary">
             {card.category}
           </span>
-          <span className="font-body text-[11px] text-li-text-tertiary">{metaLine}</span>
+          <span className="font-body text-ds-small text-li-text-tertiary">{metaLine}</span>
         </div>
 
         <div className="-mt-[4px] flex items-center gap-[8px]">
@@ -98,16 +99,15 @@ export default function SignalCardComponent({ card }: Props) {
           {card.whyNow}
         </p>
 
-        <div className="flex flex-wrap items-center gap-[6px] pt-[2px]">
-          <CtaButton cta={card.primaryCta} variant="primary" onClick={() => handleCta(card.primaryCta)} />
-          <CtaButton cta={card.secondaryCta} variant="ghost" onClick={() => handleCta(card.secondaryCta)} />
+        <div className="flex items-center justify-end gap-[8px] pt-[2px]">
           <button
             onClick={handleLearnMore}
-            className="ml-auto flex items-center gap-[3px] rounded px-[6px] py-[2px] font-body text-[11px] text-li-text-tertiary hover:text-li-blue hover:underline"
+            className="flex items-center gap-[4px] rounded-full border border-li-border-standard px-[12px] py-[4px] font-body text-[12px] font-medium text-li-text-secondary transition-colors hover:border-li-blue hover:text-li-blue"
           >
             Learn more
-            <ArrowRight size={10} />
+            <ArrowRight size={12} />
           </button>
+          <CtaButton cta={card.primaryCta} variant="primary" onClick={() => handleCta(card.primaryCta)} />
         </div>
       </div>
     </div>

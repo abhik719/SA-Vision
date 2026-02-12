@@ -1,60 +1,114 @@
 import type { Evidence, PrioritizedAccountRow, DiscoveryLeadRow } from '../types/evidence';
 import { seedDrafts, seedDraftsForOutreach6 } from './drafts';
 import { seedOutreachDrafts, defaultOutreachPlan } from './outreachLeads';
+import { generateDrafts } from '../demo/seed';
 import { getAccountLogo } from './accountLogos';
 import { getLeadAvatar } from './leadAvatars';
+
+const allDrafts = generateDrafts();
 
 // ── Prioritization flow seed data ──────────────────────────
 
 const prioritizedAccounts: PrioritizedAccountRow[] = [
-  { id: 'acc_15', company: 'Apex Ventures', score: 94, primarySignal: 'Series C announced ($65M)', signalType: 'funding', actionItems: ['Connect with VP Revenue', 'Send congrats + POV on scaling GTM', 'Schedule intro call', 'Share relevant case study'], employees: '201–500', industry: 'FinTech', location: 'New York, NY', filterTags: ['recent-funding', 'high-engagement'] },
-  { id: 'acc_11', company: 'NovaTech Solutions', score: 93, primarySignal: 'New CRO joined from Salesforce', signalType: 'leadership', actionItems: ['Connect with new CRO', 'Send personalized intro email', 'Map the buying committee', 'Schedule discovery call'], employees: '1,001–5,000', industry: 'Enterprise Software', location: 'Chicago, IL', filterTags: ['leadership-change', 'high-engagement'] },
-  { id: 'acc_01', company: 'Acme Software', score: 92, primarySignal: 'VP Finance joined from Snowflake', signalType: 'leadership', actionItems: ['Connect with VP Finance', 'Multi-thread into RevOps', 'Send CRM modernization POV', 'Share relevant case study'], employees: '501–1,000', industry: 'B2B SaaS', location: 'San Mateo, CA', filterTags: ['leadership-change', 'tech-alignment'] },
-  { id: 'acc_02', company: 'Northwind Traders', score: 91, primarySignal: 'New VP Revenue Ops hired', signalType: 'leadership', actionItems: ['Intro to new VP RevOps', 'Share CRM modernization playbook', 'Map IT stakeholders', 'Schedule product demo'], employees: '1,001–5,000', industry: 'Logistics & Supply Chain', location: 'Austin, TX', filterTags: ['leadership-change', 'tech-alignment'] },
-  { id: 'acc_13', company: 'Cascade Systems', score: 89, primarySignal: 'Pipeline analytics evaluation', signalType: 'tech_fit', actionItems: ['Connect with Head of Enablement', 'Share pipeline analytics benchmark', 'Identify IT stakeholder', 'Request warm intro via 1st connection'], employees: '501–1,000', industry: 'Cloud Infrastructure', location: 'Seattle, WA', filterTags: ['tech-alignment', 'high-engagement'] },
-  { id: 'acc_03', company: 'Contoso Cloud', score: 88, primarySignal: 'CIO promoted to President, Digital', signalType: 'leadership', actionItems: ['Send congrats to new President', 'Engage Revenue Analytics team', 'Update CRM with role change', 'Multi-thread Finance'], employees: '1,001–5,000', industry: 'Healthcare IT', location: 'Seattle, WA', filterTags: ['leadership-change'] },
-  { id: 'acc_18', company: 'Quantum Financial', score: 87, primarySignal: 'CDO role created', signalType: 'expansion', actionItems: ['Connect with new CDO', 'Send digital transformation POV', 'Engage IT Applications team', 'Schedule executive briefing'], employees: '10,001+', industry: 'Financial Services', location: 'Charlotte, NC', filterTags: ['high-engagement'] },
-  { id: 'acc_04', company: 'Fabrikam AI', score: 86, primarySignal: 'Series B announced ($40M)', signalType: 'funding', actionItems: ['Connect with VP Sales (when hired)', 'Share scaling playbook', 'Engage Sales Enablement', 'Position for post-hire outreach'], employees: '5,001–10,000', industry: 'Industrial Manufacturing', location: 'Phoenix, AZ', filterTags: ['recent-funding'] },
-  { id: 'acc_12', company: 'BrightPath Analytics', score: 85, primarySignal: 'VP Sales Ops hired', signalType: 'leadership', actionItems: ['Send intro to new VP Sales Ops', 'Share sales intelligence whitepaper', 'Map RevOps org', 'Schedule demo'], employees: '201–500', industry: 'Data Analytics', location: 'Boston, MA', filterTags: ['leadership-change', 'tech-alignment'] },
-  { id: 'acc_05', company: 'Globex Corp', score: 84, primarySignal: 'New CRO joined', signalType: 'leadership', actionItems: ['Engage CRO via warm path', 'Share pipeline analytics POV', 'Connect with VP Finance', 'Conference follow-up'], employees: '201–500', industry: 'Cybersecurity', location: 'Denver, CO', filterTags: ['high-engagement'] },
-  { id: 'acc_07', company: 'Hooli Inc', score: 82, primarySignal: 'Finance Director promoted to VP', signalType: 'leadership', actionItems: ['Send congrats on promotion', 'Share compliance modernization content', 'Engage CRO', 'Request warm intro'], employees: '501–1,000', industry: 'FinTech', location: 'San Jose, CA', filterTags: ['leadership-change'] },
-  { id: 'acc_06', company: 'Initech Systems', score: 81, primarySignal: 'VP Marketing Ops joined', signalType: 'leadership', actionItems: ['Intro to new VP Marketing Ops', 'Share customer data platform POV', 'Engage Director RevOps', 'Map marketing org'], employees: '10,001+', industry: 'Retail', location: 'Los Angeles, CA', filterTags: ['leadership-change', 'high-engagement'] },
-  { id: 'acc_14', company: 'Meridian Group', score: 79, primarySignal: 'VP IT joined from Oracle', signalType: 'tech_fit', actionItems: ['Connect with VP IT', 'Share CRM consolidation case study', 'Engage procurement', 'Schedule tech eval session'], employees: '5,001–10,000', industry: 'Professional Services', location: 'Atlanta, GA', filterTags: ['tech-alignment'] },
-  { id: 'acc_17', company: 'Velocity Labs', score: 77, primarySignal: 'First VP Sales hired', signalType: 'expansion', actionItems: ['Connect with VP Sales', 'Share GTM scaling playbook', 'Offer founder-level intro', 'Position for early deal'], employees: '100–200', industry: 'DevTools', location: 'Austin, TX', filterTags: ['high-engagement'] },
-  { id: 'acc_08', company: 'Pied Piper', score: 75, primarySignal: 'VP Sales Ops joined', signalType: 'leadership', actionItems: ['Intro to VP Sales Ops', 'Share territory planning content', 'Engage VP Revenue', 'Schedule product walkthrough'], employees: '1,001–5,000', industry: 'Energy', location: 'Houston, TX', filterTags: [] },
-  { id: 'acc_09', company: 'Vandelay Industries', score: 72, primarySignal: 'VP Sales joined', signalType: 'leadership', actionItems: ['Connect with VP Sales', 'Share forecasting POV', 'Engage finance team'], employees: '200–500', industry: 'FinTech', location: 'New York, NY', filterTags: [] },
-  { id: 'acc_16', company: 'Trident Healthcare', score: 70, primarySignal: 'VP RevOps promoted', signalType: 'leadership', actionItems: ['Send congrats', 'Share revenue cycle content', 'Map finance stakeholders'], employees: '1,001–5,000', industry: 'Healthcare IT', location: 'Minneapolis, MN', filterTags: [] },
-  { id: 'acc_19', company: 'Summit Retail', score: 68, primarySignal: 'VP Digital Commerce joined', signalType: 'expansion', actionItems: ['Intro to VP Digital Commerce', 'Share omnichannel CX POV', 'Engage IT team'], employees: '501–1,000', industry: 'Retail Tech', location: 'Dallas, TX', filterTags: [] },
-  { id: 'acc_10', company: 'Stark Digital', score: 65, primarySignal: 'VP promoted internally', signalType: 'leadership', actionItems: ['Send congrats on promotion', 'Share ABM content', 'Engage marketing team'], employees: '100–200', industry: 'MarTech', location: 'Portland, OR', filterTags: [] },
-  { id: 'acc_20', company: 'Evergreen Data', score: 62, primarySignal: 'VP Marketing hired', signalType: 'expansion', actionItems: ['Connect with VP Marketing', 'Share data-driven sales POV'], employees: '201–500', industry: 'Data Infrastructure', location: 'Denver, CO', filterTags: [] },
+  // ── Original 20 accounts (with dimensional tags added) ──
+  { id: 'acc_15', company: 'Apex Ventures', score: 94, primarySignal: 'Series C announced ($65M)', signalType: 'funding', actionItems: ['Connect with VP Revenue', 'Send congrats + POV on scaling GTM', 'Schedule intro call', 'Share relevant case study'], employees: '201–500', industry: 'FinTech', location: 'New York, NY', filterTags: ['recent-funding', 'high-engagement', 'region-northeast', 'industry-fintech', 'size-midsize'] },
+  { id: 'acc_11', company: 'NovaTech Solutions', score: 93, primarySignal: 'New CRO joined from Salesforce', signalType: 'leadership', actionItems: ['Connect with new CRO', 'Send personalized intro email', 'Map the buying committee', 'Schedule discovery call'], employees: '1,001–5,000', industry: 'Enterprise Software', location: 'Chicago, IL', filterTags: ['leadership-change', 'high-engagement', 'region-midwest', 'industry-enterprise-sw', 'size-enterprise', 'hiring-surge'] },
+  { id: 'acc_01', company: 'Acme Software', score: 92, primarySignal: 'VP Finance joined from Snowflake', signalType: 'leadership', actionItems: ['Connect with VP Finance', 'Multi-thread into RevOps', 'Send CRM modernization POV', 'Share relevant case study'], employees: '501–1,000', industry: 'B2B SaaS', location: 'San Mateo, CA', filterTags: ['leadership-change', 'not-touched-30d', 'region-bay-area', 'industry-saas', 'size-growth', 'hiring-surge'] },
+  { id: 'acc_02', company: 'Northwind Traders', score: 91, primarySignal: 'New VP Revenue Ops hired', signalType: 'leadership', actionItems: ['Intro to new VP RevOps', 'Share CRM modernization playbook', 'Map IT stakeholders', 'Schedule product demo'], employees: '1,001–5,000', industry: 'Logistics & Supply Chain', location: 'Austin, TX', filterTags: ['leadership-change', 'not-touched-30d', 'region-south', 'industry-enterprise-sw', 'size-enterprise'] },
+  { id: 'acc_13', company: 'Cascade Systems', score: 89, primarySignal: 'Pipeline analytics evaluation', signalType: 'tech_fit', actionItems: ['Connect with Head of Enablement', 'Share pipeline analytics benchmark', 'Identify IT stakeholder', 'Request warm intro via 1st connection'], employees: '501–1,000', industry: 'Cloud Infrastructure', location: 'Seattle, WA', filterTags: ['tech-alignment', 'high-engagement', 'region-west', 'industry-cloud', 'size-growth'] },
+  { id: 'acc_03', company: 'Contoso Cloud', score: 88, primarySignal: 'CIO promoted to President, Digital', signalType: 'leadership', actionItems: ['Send congrats to new President', 'Engage Revenue Analytics team', 'Update CRM with role change', 'Multi-thread Finance'], employees: '1,001–5,000', industry: 'Healthcare IT', location: 'Seattle, WA', filterTags: ['leadership-change', 'not-touched-30d', 'region-west', 'industry-healthtech', 'size-enterprise'] },
+  { id: 'acc_18', company: 'Quantum Financial', score: 87, primarySignal: 'CDO role created', signalType: 'expansion', actionItems: ['Connect with new CDO', 'Send digital transformation POV', 'Engage IT Applications team', 'Schedule executive briefing'], employees: '10,001+', industry: 'Financial Services', location: 'Charlotte, NC', filterTags: ['expansion', 'high-engagement', 'region-southeast', 'industry-fintech', 'size-enterprise'] },
+  { id: 'acc_04', company: 'Fabrikam AI', score: 86, primarySignal: 'Series B announced ($40M)', signalType: 'funding', actionItems: ['Connect with VP Sales (when hired)', 'Share scaling playbook', 'Engage Sales Enablement', 'Position for post-hire outreach'], employees: '5,001–10,000', industry: 'Industrial Manufacturing', location: 'Phoenix, AZ', filterTags: ['recent-funding', 'not-touched-30d', 'region-west', 'industry-enterprise-sw', 'size-enterprise'] },
+  { id: 'acc_12', company: 'BrightPath Analytics', score: 85, primarySignal: 'VP Sales Ops hired', signalType: 'leadership', actionItems: ['Send intro to new VP Sales Ops', 'Share sales intelligence whitepaper', 'Map RevOps org', 'Schedule demo'], employees: '201–500', industry: 'Data Analytics', location: 'Boston, MA', filterTags: ['leadership-change', 'not-touched-30d', 'tech-alignment', 'region-northeast', 'industry-saas', 'size-midsize'] },
+  { id: 'acc_05', company: 'Globex Corp', score: 84, primarySignal: 'New CRO joined', signalType: 'leadership', actionItems: ['Engage CRO via warm path', 'Share pipeline analytics POV', 'Connect with VP Finance', 'Conference follow-up'], employees: '201–500', industry: 'Cybersecurity', location: 'Denver, CO', filterTags: ['leadership-change', 'region-west', 'industry-saas', 'size-midsize'] },
+  { id: 'acc_07', company: 'Hooli Inc', score: 82, primarySignal: 'Finance Director promoted to VP', signalType: 'leadership', actionItems: ['Send congrats on promotion', 'Share compliance modernization content', 'Engage CRO', 'Request warm intro'], employees: '501–1,000', industry: 'FinTech', location: 'San Jose, CA', filterTags: ['leadership-change', 'not-touched-30d', 'region-bay-area', 'industry-fintech', 'size-growth'] },
+  { id: 'acc_06', company: 'Initech Systems', score: 81, primarySignal: 'VP Marketing Ops joined', signalType: 'leadership', actionItems: ['Intro to new VP Marketing Ops', 'Share customer data platform POV', 'Engage Director RevOps', 'Map marketing org'], employees: '10,001+', industry: 'Retail', location: 'Los Angeles, CA', filterTags: ['leadership-change', 'high-engagement', 'region-west', 'industry-enterprise-sw', 'size-enterprise', 'hiring-surge'] },
+  { id: 'acc_14', company: 'Meridian Group', score: 79, primarySignal: 'VP IT joined from Oracle', signalType: 'tech_fit', actionItems: ['Connect with VP IT', 'Share CRM consolidation case study', 'Engage procurement', 'Schedule tech eval session'], employees: '5,001–10,000', industry: 'Professional Services', location: 'Atlanta, GA', filterTags: ['not-touched-30d', 'region-southeast', 'industry-enterprise-sw', 'size-enterprise'] },
+  { id: 'acc_17', company: 'Velocity Labs', score: 77, primarySignal: 'First VP Sales hired', signalType: 'expansion', actionItems: ['Connect with VP Sales', 'Share GTM scaling playbook', 'Offer founder-level intro', 'Position for early deal'], employees: '100–200', industry: 'DevTools', location: 'Austin, TX', filterTags: ['expansion', 'high-engagement', 'region-south', 'industry-saas', 'size-small', 'hiring-surge'] },
+  { id: 'acc_08', company: 'Pied Piper', score: 75, primarySignal: 'VP Sales Ops joined', signalType: 'leadership', actionItems: ['Intro to VP Sales Ops', 'Share territory planning content', 'Engage VP Revenue', 'Schedule product walkthrough'], employees: '1,001–5,000', industry: 'Energy', location: 'Houston, TX', filterTags: ['leadership-change', 'not-touched-30d', 'region-south', 'industry-enterprise-sw', 'size-enterprise'] },
+  { id: 'acc_09', company: 'Vandelay Industries', score: 72, primarySignal: 'VP Sales joined', signalType: 'leadership', actionItems: ['Connect with VP Sales', 'Share forecasting POV', 'Engage finance team'], employees: '200–500', industry: 'FinTech', location: 'New York, NY', filterTags: ['leadership-change', 'not-touched-30d', 'region-northeast', 'industry-fintech', 'size-midsize'] },
+  { id: 'acc_16', company: 'Trident Healthcare', score: 70, primarySignal: 'VP RevOps promoted', signalType: 'leadership', actionItems: ['Send congrats', 'Share revenue cycle content', 'Map finance stakeholders'], employees: '1,001–5,000', industry: 'Healthcare IT', location: 'Minneapolis, MN', filterTags: ['leadership-change', 'not-touched-30d', 'region-midwest', 'industry-healthtech', 'size-enterprise'] },
+  { id: 'acc_19', company: 'Summit Retail', score: 68, primarySignal: 'VP Digital Commerce joined', signalType: 'expansion', actionItems: ['Intro to VP Digital Commerce', 'Share omnichannel CX POV', 'Engage IT team'], employees: '501–1,000', industry: 'Retail Tech', location: 'Dallas, TX', filterTags: ['expansion', 'region-south', 'industry-enterprise-sw', 'size-growth'] },
+  { id: 'acc_10', company: 'Stark Digital', score: 65, primarySignal: 'VP promoted internally', signalType: 'leadership', actionItems: ['Send congrats on promotion', 'Share ABM content', 'Engage marketing team'], employees: '100–200', industry: 'MarTech', location: 'Portland, OR', filterTags: ['leadership-change', 'region-west', 'industry-saas', 'size-small'] },
+  { id: 'acc_20', company: 'Evergreen Data', score: 62, primarySignal: 'VP Marketing hired', signalType: 'expansion', actionItems: ['Connect with VP Marketing', 'Share data-driven sales POV'], employees: '201–500', industry: 'Data Infrastructure', location: 'Denver, CO', filterTags: ['expansion', 'region-west', 'industry-saas', 'size-midsize'] },
+
+  // ── Bay Area AI companies (for Card 1) ──
+  { id: 'acc_ba1', company: 'Synthwave AI', score: 90, primarySignal: 'Series A announced ($22M)', signalType: 'funding', actionItems: ['Connect with CEO', 'Share GTM scaling playbook', 'Engage Head of Sales'], employees: '51–200', industry: 'AI/ML', location: 'San Francisco, CA', filterTags: ['recent-funding', 'hiring-surge', 'region-bay-area', 'industry-ai', 'size-small'] },
+  { id: 'acc_ba2', company: 'Cortex Labs', score: 88, primarySignal: 'New VP Sales from HubSpot', signalType: 'leadership', actionItems: ['Connect with VP Sales', 'Send AI sales stack POV', 'Map RevOps org'], employees: '201–500', industry: 'AI/ML', location: 'Palo Alto, CA', filterTags: ['leadership-change', 'region-bay-area', 'industry-ai', 'size-midsize'] },
+  { id: 'acc_ba3', company: 'NeuralPath', score: 86, primarySignal: 'Seed+ raised ($8M)', signalType: 'funding', actionItems: ['Engage founder', 'Share early-stage sales POV', 'Position for first deal'], employees: '11–50', industry: 'AI/ML', location: 'San Francisco, CA', filterTags: ['recent-funding', 'region-bay-area', 'industry-ai', 'size-startup'] },
+  { id: 'acc_ba4', company: 'DataForge AI', score: 85, primarySignal: 'Hiring 5 AEs + 3 SDRs', signalType: 'expansion', actionItems: ['Connect with VP Revenue', 'Share hiring ramp playbook', 'Offer SDR onboarding tools'], employees: '201–500', industry: 'AI/ML', location: 'Mountain View, CA', filterTags: ['hiring-surge', 'expansion', 'region-bay-area', 'industry-ai', 'size-midsize'] },
+  { id: 'acc_ba5', company: 'Semantic Corp', score: 83, primarySignal: 'GTM team doubled in Q4', signalType: 'expansion', actionItems: ['Connect with CRO', 'Share scaling GTM POV', 'Engage RevOps'], employees: '501–1,000', industry: 'AI/ML', location: 'Redwood City, CA', filterTags: ['expansion', 'hiring-surge', 'region-bay-area', 'industry-ai', 'size-growth'] },
+  { id: 'acc_ba6', company: 'TensorOps', score: 81, primarySignal: 'Series B announced ($35M)', signalType: 'funding', actionItems: ['Connect with VP Sales', 'Share post-funding GTM plan', 'Schedule demo'], employees: '51–200', industry: 'AI/ML', location: 'San Jose, CA', filterTags: ['recent-funding', 'hiring-surge', 'region-bay-area', 'industry-ai', 'size-small'] },
+  { id: 'acc_ba7', company: 'Prism Intelligence', score: 79, primarySignal: 'CRO hired from Gong', signalType: 'leadership', actionItems: ['Intro to new CRO', 'Share revenue intelligence POV', 'Map org'], employees: '201–500', industry: 'AI/ML', location: 'Oakland, CA', filterTags: ['leadership-change', 'not-touched-30d', 'region-bay-area', 'industry-ai', 'size-midsize'] },
+  { id: 'acc_ba8', company: 'Atlas AI Systems', score: 77, primarySignal: 'VP Revenue Ops + 4 SDR hires', signalType: 'expansion', actionItems: ['Connect with VP RevOps', 'Share SDR enablement content', 'Engage VP Sales'], employees: '501–1,000', industry: 'AI/ML', location: 'Menlo Park, CA', filterTags: ['leadership-change', 'hiring-surge', 'region-bay-area', 'industry-ai', 'size-growth'] },
+
+  // ── Mid-size software companies (for Card 2) ──
+  { id: 'acc_sw1', company: 'CloudPeak Software', score: 84, primarySignal: 'New VP Engineering hired', signalType: 'leadership', actionItems: ['Connect with VP Eng', 'Share DevOps integration POV', 'Map IT org'], employees: '201–500', industry: 'B2B SaaS', location: 'Portland, OR', filterTags: ['leadership-change', 'region-west', 'industry-saas', 'size-midsize'] },
+  { id: 'acc_sw2', company: 'Relay Systems', score: 82, primarySignal: 'Hiring 3 AEs this quarter', signalType: 'expansion', actionItems: ['Connect with VP Sales', 'Share territory planning POV', 'Offer sales intel demo'], employees: '501–1,000', industry: 'Enterprise Software', location: 'Austin, TX', filterTags: ['hiring-surge', 'expansion', 'region-south', 'industry-enterprise-sw', 'size-growth'] },
+  { id: 'acc_sw3', company: 'FlowState Tech', score: 80, primarySignal: 'Pipeline review initiated', signalType: 'tech_fit', actionItems: ['Connect with Dir RevOps', 'Share pipeline analytics content', 'Schedule demo'], employees: '201–500', industry: 'B2B SaaS', location: 'Denver, CO', filterTags: ['not-touched-30d', 'region-west', 'industry-saas', 'size-midsize'] },
+  { id: 'acc_sw4', company: 'PivotCRM', score: 78, primarySignal: 'VP Sales Ops from Salesforce', signalType: 'leadership', actionItems: ['Intro to VP Sales Ops', 'Share CRM migration POV', 'Map org'], employees: '501–1,000', industry: 'Enterprise Software', location: 'Boston, MA', filterTags: ['leadership-change', 'region-northeast', 'industry-enterprise-sw', 'size-growth'] },
+  { id: 'acc_sw5', company: 'StackBridge', score: 76, primarySignal: 'New product launch + team expansion', signalType: 'expansion', actionItems: ['Connect with CEO', 'Share product launch outreach POV', 'Engage Sales'], employees: '201–500', industry: 'B2B SaaS', location: 'Seattle, WA', filterTags: ['expansion', 'region-west', 'industry-saas', 'size-midsize'] },
+  { id: 'acc_sw6', company: 'LoopIO', score: 74, primarySignal: 'CRM consolidation initiative', signalType: 'tech_fit', actionItems: ['Connect with Dir IT', 'Share CRM consolidation case study', 'Schedule tech eval'], employees: '501–1,000', industry: 'Enterprise Software', location: 'Chicago, IL', filterTags: ['not-touched-30d', 'region-midwest', 'industry-enterprise-sw', 'size-growth'] },
+
+  // ── Recently funded companies (for Card 4) ──
+  { id: 'acc_fn1', company: 'Beacon Health AI', score: 87, primarySignal: 'Series B announced ($30M)', signalType: 'funding', actionItems: ['Connect with CRO', 'Share healthtech GTM playbook', 'Schedule demo'], employees: '51–200', industry: 'HealthTech', location: 'Boston, MA', filterTags: ['recent-funding', 'region-northeast', 'industry-healthtech', 'size-small'] },
+  { id: 'acc_fn2', company: 'PayStream', score: 85, primarySignal: 'Series C announced ($55M)', signalType: 'funding', actionItems: ['Connect with VP Revenue', 'Share payments GTM POV', 'Engage VP Sales'], employees: '201–500', industry: 'FinTech', location: 'New York, NY', filterTags: ['recent-funding', 'hiring-surge', 'region-northeast', 'industry-fintech', 'size-midsize'] },
+  { id: 'acc_fn3', company: 'GreenGrid Energy', score: 83, primarySignal: 'Series A announced ($15M)', signalType: 'funding', actionItems: ['Engage founder', 'Share early GTM playbook', 'Position for first enterprise deal'], employees: '51–200', industry: 'CleanTech', location: 'Austin, TX', filterTags: ['recent-funding', 'region-south', 'industry-saas', 'size-small'] },
+  { id: 'acc_fn4', company: 'RoboSupply', score: 81, primarySignal: 'Series B announced ($25M)', signalType: 'funding', actionItems: ['Connect with VP Ops', 'Share supply chain automation POV', 'Schedule demo'], employees: '201–500', industry: 'Logistics AI', location: 'Chicago, IL', filterTags: ['recent-funding', 'region-midwest', 'industry-ai', 'size-midsize'] },
+  { id: 'acc_fn5', company: 'EdgeSecure', score: 79, primarySignal: 'Series C announced ($48M)', signalType: 'funding', actionItems: ['Connect with VP Sales', 'Share enterprise security GTM POV', 'Engage CRO'], employees: '501–1,000', industry: 'Cybersecurity', location: 'Washington, DC', filterTags: ['recent-funding', 'hiring-surge', 'region-northeast', 'industry-saas', 'size-growth'] },
+  { id: 'acc_fn6', company: 'HealthSpan AI', score: 77, primarySignal: 'Series A announced ($12M)', signalType: 'funding', actionItems: ['Engage CEO', 'Share healthtech sales POV', 'Position for seed deal'], employees: '11–50', industry: 'HealthTech AI', location: 'San Francisco, CA', filterTags: ['recent-funding', 'region-bay-area', 'industry-ai', 'size-startup'] },
+
+  // ── Companies with hiring surges (for Card 3) ──
+  { id: 'acc_hr1', company: 'RapidScale', score: 83, primarySignal: 'Hiring 8 GTM roles this quarter', signalType: 'expansion', actionItems: ['Connect with VP Sales', 'Share hiring ramp enablement POV', 'Engage RevOps'], employees: '501–1,000', industry: 'Cloud Software', location: 'Dallas, TX', filterTags: ['hiring-surge', 'expansion', 'region-south', 'industry-cloud', 'size-growth'] },
+  { id: 'acc_hr2', company: 'SignalFire Analytics', score: 80, primarySignal: 'Hiring VP Sales + 4 AEs', signalType: 'expansion', actionItems: ['Connect with CEO', 'Share sales intelligence POV', 'Position for deal'], employees: '201–500', industry: 'Data Analytics', location: 'Seattle, WA', filterTags: ['hiring-surge', 'expansion', 'region-west', 'industry-saas', 'size-midsize'] },
+  { id: 'acc_hr3', company: 'ProspectIQ', score: 78, primarySignal: 'CRO hired + 6 SDR openings', signalType: 'leadership', actionItems: ['Intro to new CRO', 'Share SDR enablement content', 'Engage VP Revenue'], employees: '201–500', industry: 'RevTech', location: 'New York, NY', filterTags: ['hiring-surge', 'leadership-change', 'region-northeast', 'industry-saas', 'size-midsize'] },
+  { id: 'acc_hr4', company: 'DealEngine', score: 75, primarySignal: 'Series A + first sales team', signalType: 'funding', actionItems: ['Engage founder', 'Share first sales hire playbook', 'Position for early deal'], employees: '11–50', industry: 'RevTech', location: 'San Francisco, CA', filterTags: ['hiring-surge', 'recent-funding', 'region-bay-area', 'industry-saas', 'size-startup'] },
 ];
 
 const discoveryLeads: DiscoveryLeadRow[] = [
-  { id: 'ld_922', name: 'Sophia Kim', title: 'VP Revenue', company: 'Apex Ventures', signal: 'Series C funding + GTM expansion', signalType: 'intent', rationale: 'VP Revenue at newly funded company, likely evaluating sales tools', score: 95, signals: ['Series C funding', 'GTM expansion', 'Active on LinkedIn'] },
-  { id: 'ld_919', name: 'Daniel Hughes', title: 'CRO', company: 'NovaTech Solutions', signal: 'Started role 12 days ago', signalType: 'job_change', rationale: 'New CRO likely evaluating revenue operations tools', score: 93, signals: ['Recent job change', 'RevOps expansion', 'Active on LinkedIn'] },
-  { id: 'ld_901', name: 'Sarah Chen', title: 'CFO', company: 'Acme Software', signal: 'Engaged with CRM content', signalType: 'engagement', rationale: 'CFO at account with VP Sales hire + RevOps expansion', score: 92, signals: ['VP Sales hire', 'RevOps hiring spike', 'Content engagement'] },
-  { id: 'ld_903', name: 'Emily Watson', title: 'VP Finance', company: 'Northwind Traders', signal: 'Champion engagement up 40%', signalType: 'engagement', rationale: '1st-degree connection with rising engagement signals', score: 91, signals: ['Champion engagement up', 'Competitor migration signal', 'Direct connection'] },
-  { id: 'ld_904', name: 'James Park', title: 'VP Revenue Operations', company: 'Northwind Traders', signal: 'CRM modernization research', signalType: 'intent', rationale: 'VP RevOps at account researching CRM modernization', score: 90, signals: ['Active in last 7d', 'CRM modernization topic', 'Product page view'] },
-  { id: 'ld_921', name: 'Ryan Cooper', title: 'Head of Sales Enablement', company: 'Cascade Systems', signal: 'Pipeline analytics evaluation', signalType: 'tech_stack', rationale: '1st-degree connection evaluating pipeline analytics tools', score: 89, signals: ['Pipeline analytics interest', 'Team growth', 'Direct connection'] },
-  { id: 'ld_905', name: 'Priya Sharma', title: 'Head of Finance Ops', company: 'Contoso Cloud', signal: 'RevOps automation interest', signalType: 'intent', rationale: 'Finance Ops lead at account with CIO promotion', score: 88, signals: ['Hiring ramp: Analytics', 'RevOps automation interest'] },
-  { id: 'ld_906', name: 'David Kim', title: 'SVP Sales', company: 'Globex Corp', signal: 'Conference speaker + product launch', signalType: 'engagement', rationale: 'SVP Sales at account with new CRO and product launch', score: 87, signals: ['Product launch mention', 'Conference speaker', 'Active LinkedIn poster'] },
-  { id: 'ld_920', name: 'Jessica Martinez', title: 'VP Sales Operations', company: 'BrightPath Analytics', signal: 'Started role 21 days ago', signalType: 'job_change', rationale: 'New VP Sales Ops likely building out sales intelligence stack', score: 86, signals: ['New role', 'Sales intelligence evaluation', 'Tech stack change'] },
-  { id: 'ld_902', name: 'Marcus Rivera', title: 'CFO', company: 'Acme Software', signal: 'Budget expansion signal', signalType: 'intent', rationale: 'CFO at account with active opportunity + budget expansion', score: 85, signals: ['Quarterly earnings call', 'Budget expansion'] },
-  { id: 'ld_907', name: 'Rachel Foster', title: 'VP GTM Systems', company: 'Acme Software', signal: 'New role + team expansion', signalType: 'job_change', rationale: 'VP GTM Systems building out RevOps infrastructure', score: 84, signals: ['New role announcement', 'Team expansion'] },
-  { id: 'ld_908', name: 'Tom Baker', title: 'CRO', company: 'Hooli Inc', signal: 'Board meeting + active LinkedIn', signalType: 'engagement', rationale: 'CRO actively posting about revenue strategy', score: 83, signals: ['Board meeting signal', 'Active LinkedIn poster'] },
-  { id: 'ld_924', name: 'Angela Torres', title: 'Director, Revenue Analytics', company: 'Velocity Labs', signal: 'GTM buildout underway', signalType: 'tech_stack', rationale: 'Revenue Analytics lead at company building first sales org', score: 82, signals: ['First VP Sales hire', 'GTM buildout'] },
-  { id: 'ld_909', name: 'Lisa Chang', title: 'VP Revenue', company: 'Pied Piper', signal: 'Just promoted + solution search', signalType: 'job_change', rationale: 'Recently promoted VP actively searching for solutions', score: 81, signals: ['Just promoted', 'Solution search active'] },
-  { id: 'ld_910', name: 'Alex Thompson', title: 'VP Sales Operations', company: 'Pied Piper', signal: 'Territory planning topics', signalType: 'intent', rationale: 'VP Sales Ops researching territory planning solutions', score: 80, signals: ['Territory planning topics', 'Attended industry event'] },
-  { id: 'ld_925', name: 'Patrick Chen', title: 'CDO', company: 'Quantum Financial', signal: 'Digital transformation initiative', signalType: 'intent', rationale: 'Newly created CDO role driving digital transformation', score: 79, signals: ['Digital transformation initiative', 'CDO role created'] },
-  { id: 'ld_911', name: 'Nina Patel', title: 'Head of Sales Enablement', company: 'Fabrikam AI', signal: 'Hiring surge + tech stack change', signalType: 'tech_stack', rationale: 'Head of Enablement at recently funded company changing tech stack', score: 79, signals: ['Hiring surge', 'Tech stack change'] },
-  { id: 'ld_912', name: "Kevin O'Brien", title: 'Director, FP&A', company: 'Fabrikam AI', signal: 'CPQ evaluation + reorg window', signalType: 'intent', rationale: 'FP&A Director at company evaluating CPQ during reorg', score: 78, signals: ['CPQ evaluation', 'Likely reorg window'] },
-  { id: 'ld_923', name: 'Mark Sullivan', title: 'VP IT Applications', company: 'Meridian Group', signal: 'CRM consolidation initiative', signalType: 'tech_stack', rationale: 'VP IT driving CRM consolidation across the organization', score: 77, signals: ['CRM consolidation initiative', 'Tech evaluation'] },
-  { id: 'ld_913', name: 'Maria Gonzalez', title: 'VP Finance', company: 'Globex Corp', signal: 'Annual planning + CRM evaluation', signalType: 'intent', rationale: 'VP Finance during annual planning cycle evaluating CRM', score: 76, signals: ['Annual planning underway', 'CRM evaluation'] },
-  { id: 'ld_914', name: 'Robert Lee', title: 'Director RevOps', company: 'Initech Systems', signal: 'Attended webinar + whitepaper', signalType: 'engagement', rationale: 'Director RevOps showing high engagement with educational content', score: 75, signals: ['Attended webinar', 'Downloaded whitepaper'] },
-  { id: 'ld_915', name: 'Samantha Wright', title: 'CFO', company: 'Hooli Inc', signal: 'Expansion budget signal', signalType: 'intent', rationale: 'CFO at account with expansion budget and compliance focus', score: 74, signals: ['Expansion budget signal', 'Compliance modernization'] },
-  { id: 'ld_916', name: 'Chris Taylor', title: 'VP Partnerships', company: 'Acme Software', signal: 'Channel strategy shift', signalType: 'engagement', rationale: 'VP Partnerships with referral potential + shared past company', score: 73, signals: ['Channel strategy shift', 'Referral potential'] },
-  { id: 'ld_917', name: 'Amanda Chen', title: 'Director, Revenue Analytics', company: 'Contoso Cloud', signal: 'Data platform migration', signalType: 'tech_stack', rationale: '1st-degree connection during data platform migration', score: 72, signals: ['Data platform migration', 'Team growth'] },
-  { id: 'ld_918', name: 'Brian Moore', title: 'VP IT Applications', company: 'Northwind Traders', signal: 'Tech evaluation phase', signalType: 'tech_stack', rationale: 'VP IT during active tech evaluation and CRM modernization', score: 71, signals: ['Tech evaluation phase', 'CRM modernization'] },
+  // ── Original leads (with function/seniority/location tags added) ──
+  { id: 'ld_922', name: 'Sophia Kim', title: 'VP Revenue', company: 'Apex Ventures', signal: 'Series C funding + GTM expansion', signalType: 'intent', rationale: 'VP Revenue at newly funded company, likely evaluating sales tools', score: 95, signals: ['Series C funding', 'GTM expansion', 'Active on LinkedIn'], filterTags: ['vp_plus', 'fn-sales', 'seniority-vp-plus', 'loc-northeast'] },
+  { id: 'ld_919', name: 'Daniel Hughes', title: 'CRO', company: 'NovaTech Solutions', signal: 'Started role 12 days ago', signalType: 'job_change', rationale: 'New CRO likely evaluating revenue operations tools', score: 93, signals: ['Recent job change', 'RevOps expansion', 'Active on LinkedIn'], filterTags: ['vp_plus', 'job_changes', 'fn-c-suite', 'seniority-vp-plus', 'loc-midwest'] },
+  { id: 'ld_901', name: 'Sarah Chen', title: 'CFO', company: 'Acme Software', signal: 'Engaged with CRM content', signalType: 'engagement', rationale: 'CFO at account with VP Sales hire + RevOps expansion', score: 92, signals: ['VP Sales hire', 'RevOps hiring spike', 'Content engagement'], filterTags: ['vp_plus', 'fn-finance', 'fn-c-suite', 'seniority-vp-plus', 'loc-bay-area'] },
+  { id: 'ld_903', name: 'Emily Watson', title: 'VP Finance', company: 'Northwind Traders', signal: 'Champion engagement up 40%', signalType: 'engagement', rationale: '1st-degree connection with rising engagement signals', score: 91, signals: ['Champion engagement up', 'Competitor migration signal', 'Direct connection'], filterTags: ['vp_plus', 'fn-finance', 'seniority-vp-plus', 'loc-south'] },
+  { id: 'ld_904', name: 'James Park', title: 'VP Revenue Operations', company: 'Northwind Traders', signal: 'CRM modernization research', signalType: 'intent', rationale: 'VP RevOps at account researching CRM modernization', score: 90, signals: ['Active in last 7d', 'CRM modernization topic', 'Product page view'], filterTags: ['vp_plus', 'fn-revops', 'seniority-vp-plus', 'loc-south'] },
+  { id: 'ld_921', name: 'Ryan Cooper', title: 'Head of Sales Enablement', company: 'Cascade Systems', signal: 'Pipeline analytics evaluation', signalType: 'tech_stack', rationale: '1st-degree connection evaluating pipeline analytics tools', score: 89, signals: ['Pipeline analytics interest', 'Team growth', 'Direct connection'], filterTags: ['fn-sales', 'seniority-director', 'loc-west'] },
+  { id: 'ld_905', name: 'Priya Sharma', title: 'Head of Finance Ops', company: 'Contoso Cloud', signal: 'RevOps automation interest', signalType: 'intent', rationale: 'Finance Ops lead at account with CIO promotion', score: 88, signals: ['Hiring ramp: Analytics', 'RevOps automation interest'], filterTags: ['fn-finance', 'seniority-director', 'loc-west'] },
+  { id: 'ld_906', name: 'David Kim', title: 'SVP Sales', company: 'Globex Corp', signal: 'Conference speaker + product launch', signalType: 'engagement', rationale: 'SVP Sales at account with new CRO and product launch', score: 87, signals: ['Product launch mention', 'Conference speaker', 'Active LinkedIn poster'], filterTags: ['vp_plus', 'fn-sales', 'seniority-vp-plus', 'loc-west'] },
+  { id: 'ld_920', name: 'Jessica Martinez', title: 'VP Sales Operations', company: 'BrightPath Analytics', signal: 'Started role 21 days ago', signalType: 'job_change', rationale: 'New VP Sales Ops likely building out sales intelligence stack', score: 86, signals: ['New role', 'Sales intelligence evaluation', 'Tech stack change'], filterTags: ['vp_plus', 'job_changes', 'fn-revops', 'seniority-vp-plus', 'loc-northeast'] },
+  { id: 'ld_902', name: 'Marcus Rivera', title: 'CFO', company: 'Acme Software', signal: 'Budget expansion signal', signalType: 'intent', rationale: 'CFO at account with active opportunity + budget expansion', score: 85, signals: ['Quarterly earnings call', 'Budget expansion'], filterTags: ['vp_plus', 'fn-finance', 'fn-c-suite', 'seniority-vp-plus', 'loc-bay-area'] },
+  { id: 'ld_907', name: 'Rachel Foster', title: 'VP GTM Systems', company: 'Acme Software', signal: 'New role + team expansion', signalType: 'job_change', rationale: 'VP GTM Systems building out RevOps infrastructure', score: 84, signals: ['New role announcement', 'Team expansion'], filterTags: ['vp_plus', 'job_changes', 'fn-revops', 'seniority-vp-plus', 'loc-bay-area'] },
+  { id: 'ld_908', name: 'Tom Baker', title: 'CRO', company: 'Hooli Inc', signal: 'Board meeting + active LinkedIn', signalType: 'engagement', rationale: 'CRO actively posting about revenue strategy', score: 83, signals: ['Board meeting signal', 'Active LinkedIn poster'], filterTags: ['vp_plus', 'fn-c-suite', 'seniority-vp-plus', 'loc-bay-area'] },
+  { id: 'ld_924', name: 'Angela Torres', title: 'Director, Revenue Analytics', company: 'Velocity Labs', signal: 'GTM buildout underway', signalType: 'tech_stack', rationale: 'Revenue Analytics lead at company building first sales org', score: 82, signals: ['First VP Sales hire', 'GTM buildout'], filterTags: ['fn-revops', 'seniority-director', 'loc-south'] },
+  { id: 'ld_909', name: 'Lisa Chang', title: 'VP Revenue', company: 'Pied Piper', signal: 'Just promoted + solution search', signalType: 'job_change', rationale: 'Recently promoted VP actively searching for solutions', score: 81, signals: ['Just promoted', 'Solution search active'], filterTags: ['vp_plus', 'job_changes', 'fn-sales', 'seniority-vp-plus', 'loc-south'] },
+  { id: 'ld_910', name: 'Alex Thompson', title: 'VP Sales Operations', company: 'Pied Piper', signal: 'Territory planning topics', signalType: 'intent', rationale: 'VP Sales Ops researching territory planning solutions', score: 80, signals: ['Territory planning topics', 'Attended industry event'], filterTags: ['vp_plus', 'fn-revops', 'seniority-vp-plus', 'loc-south'] },
+  { id: 'ld_925', name: 'Patrick Chen', title: 'CDO', company: 'Quantum Financial', signal: 'Digital transformation initiative', signalType: 'intent', rationale: 'Newly created CDO role driving digital transformation', score: 79, signals: ['Digital transformation initiative', 'CDO role created'], filterTags: ['vp_plus', 'fn-c-suite', 'seniority-vp-plus', 'loc-southeast'] },
+  { id: 'ld_911', name: 'Nina Patel', title: 'Head of Sales Enablement', company: 'Fabrikam AI', signal: 'Hiring surge + tech stack change', signalType: 'tech_stack', rationale: 'Head of Enablement at recently funded company changing tech stack', score: 79, signals: ['Hiring surge', 'Tech stack change'], filterTags: ['fn-sales', 'seniority-director', 'loc-west'] },
+  { id: 'ld_912', name: "Kevin O'Brien", title: 'Director, FP&A', company: 'Fabrikam AI', signal: 'CPQ evaluation + reorg window', signalType: 'intent', rationale: 'FP&A Director at company evaluating CPQ during reorg', score: 78, signals: ['CPQ evaluation', 'Likely reorg window'], filterTags: ['fn-finance', 'seniority-director', 'loc-west'] },
+  { id: 'ld_923', name: 'Mark Sullivan', title: 'VP IT Applications', company: 'Meridian Group', signal: 'CRM consolidation initiative', signalType: 'tech_stack', rationale: 'VP IT driving CRM consolidation across the organization', score: 77, signals: ['CRM consolidation initiative', 'Tech evaluation'], filterTags: ['vp_plus', 'fn-engineering', 'seniority-vp-plus', 'loc-southeast'] },
+  { id: 'ld_913', name: 'Maria Gonzalez', title: 'VP Finance', company: 'Globex Corp', signal: 'Annual planning + CRM evaluation', signalType: 'intent', rationale: 'VP Finance during annual planning cycle evaluating CRM', score: 76, signals: ['Annual planning underway', 'CRM evaluation'], filterTags: ['vp_plus', 'fn-finance', 'seniority-vp-plus', 'loc-west'] },
+  { id: 'ld_914', name: 'Robert Lee', title: 'Director RevOps', company: 'Initech Systems', signal: 'Attended webinar + whitepaper', signalType: 'engagement', rationale: 'Director RevOps showing high engagement with educational content', score: 75, signals: ['Attended webinar', 'Downloaded whitepaper'], filterTags: ['fn-revops', 'seniority-director', 'loc-west'] },
+  { id: 'ld_915', name: 'Samantha Wright', title: 'CFO', company: 'Hooli Inc', signal: 'Expansion budget signal', signalType: 'intent', rationale: 'CFO at account with expansion budget and compliance focus', score: 74, signals: ['Expansion budget signal', 'Compliance modernization'], filterTags: ['vp_plus', 'fn-finance', 'fn-c-suite', 'seniority-vp-plus', 'loc-bay-area'] },
+  { id: 'ld_916', name: 'Chris Taylor', title: 'VP Partnerships', company: 'Acme Software', signal: 'Channel strategy shift', signalType: 'engagement', rationale: 'VP Partnerships with referral potential + shared past company', score: 73, signals: ['Channel strategy shift', 'Referral potential'], filterTags: ['vp_plus', 'fn-sales', 'seniority-vp-plus', 'loc-bay-area'] },
+  { id: 'ld_917', name: 'Amanda Chen', title: 'Director, Revenue Analytics', company: 'Contoso Cloud', signal: 'Data platform migration', signalType: 'tech_stack', rationale: '1st-degree connection during data platform migration', score: 72, signals: ['Data platform migration', 'Team growth'], filterTags: ['fn-revops', 'seniority-director', 'loc-west'] },
+  { id: 'ld_918', name: 'Brian Moore', title: 'VP IT Applications', company: 'Northwind Traders', signal: 'Tech evaluation phase', signalType: 'tech_stack', rationale: 'VP IT during active tech evaluation and CRM modernization', score: 71, signals: ['Tech evaluation phase', 'CRM modernization'], filterTags: ['vp_plus', 'fn-engineering', 'seniority-vp-plus', 'loc-south'] },
+
+  // ── New leads (Bay Area AI + various companies) ──
+  { id: 'ld_930', name: 'Derek Nguyen', title: 'VP Sales', company: 'Synthwave AI', signal: 'Building first enterprise sales team', signalType: 'job_change', rationale: 'VP Sales at freshly funded AI startup building GTM', score: 91, signals: ['Series A funding', 'First sales hires', 'Active on LinkedIn'], filterTags: ['vp_plus', 'job_changes', 'fn-sales', 'seniority-vp-plus', 'loc-bay-area'] },
+  { id: 'ld_931', name: 'Elena Rodriguez', title: 'Head of Revenue Ops', company: 'Cortex Labs', signal: 'RevOps stack evaluation', signalType: 'tech_stack', rationale: 'RevOps leader evaluating sales intelligence tools', score: 89, signals: ['Tech stack evaluation', 'Team expansion'], filterTags: ['fn-revops', 'seniority-director', 'loc-bay-area'] },
+  { id: 'ld_932', name: 'Wei Zhang', title: 'VP Engineering', company: 'DataForge AI', signal: 'Hiring surge across GTM', signalType: 'expansion', rationale: 'VP Eng at company rapidly expanding GTM function', score: 87, signals: ['Hiring surge', 'GTM expansion', 'Active on LinkedIn'], filterTags: ['vp_plus', 'fn-engineering', 'seniority-vp-plus', 'loc-bay-area'] },
+  { id: 'ld_933', name: 'Sarah Mitchell', title: 'CRO', company: 'Semantic Corp', signal: 'Doubled GTM team in Q4', signalType: 'expansion', rationale: 'CRO leading aggressive GTM expansion at AI company', score: 86, signals: ['Team doubled', 'Revenue milestones', 'Conference speaker'], filterTags: ['vp_plus', 'fn-c-suite', 'seniority-vp-plus', 'loc-bay-area'] },
+  { id: 'ld_934', name: 'Michael Torres', title: 'VP Sales', company: 'TensorOps', signal: 'Series B + scaling outbound', signalType: 'intent', rationale: 'VP Sales building outbound engine post-funding', score: 84, signals: ['Series B funding', 'Outbound scaling', 'Active recruiting'], filterTags: ['vp_plus', 'fn-sales', 'seniority-vp-plus', 'loc-bay-area'] },
+  { id: 'ld_935', name: 'Jennifer Park', title: 'Director, Marketing', company: 'Prism Intelligence', signal: 'Demand gen ramp-up', signalType: 'engagement', rationale: 'Marketing leader ramping demand gen at AI company', score: 82, signals: ['Demand gen initiative', 'Content marketing expansion'], filterTags: ['fn-marketing', 'seniority-director', 'loc-bay-area'] },
+  { id: 'ld_936', name: 'Carlos Mendez', title: 'VP Revenue', company: 'Atlas AI Systems', signal: 'RevOps + SDR hiring', signalType: 'expansion', rationale: 'VP Revenue leading GTM buildout at growth-stage AI company', score: 80, signals: ['RevOps hiring', 'SDR expansion', 'Active on LinkedIn'], filterTags: ['vp_plus', 'fn-sales', 'seniority-vp-plus', 'loc-bay-area'] },
+  { id: 'ld_937', name: 'Laura Kim', title: 'VP Sales', company: 'CloudPeak Software', signal: 'New VP Sales from Datadog', signalType: 'job_change', rationale: 'New VP Sales likely evaluating sales tools and processes', score: 85, signals: ['Recent job change', 'Tech stack evaluation'], filterTags: ['vp_plus', 'job_changes', 'fn-sales', 'seniority-vp-plus', 'loc-west'] },
+  { id: 'ld_938', name: 'Andrew Hayes', title: 'Director, Sales Ops', company: 'Relay Systems', signal: 'Hiring AEs + territory planning', signalType: 'intent', rationale: 'Sales Ops lead during active hiring ramp', score: 83, signals: ['Territory planning', 'Hiring ramp', 'Active on LinkedIn'], filterTags: ['fn-revops', 'seniority-director', 'loc-south'] },
+  { id: 'ld_939', name: 'Michelle Foster', title: 'VP Finance', company: 'PayStream', signal: 'Series C + budget expansion', signalType: 'intent', rationale: 'VP Finance at freshly funded FinTech company', score: 88, signals: ['Series C funding', 'Budget expansion', 'Finance modernization'], filterTags: ['vp_plus', 'fn-finance', 'seniority-vp-plus', 'loc-northeast'] },
+  { id: 'ld_940', name: 'Jason Brooks', title: 'CRO', company: 'RapidScale', signal: 'GTM hiring surge + product launch', signalType: 'expansion', rationale: 'CRO leading rapid GTM expansion at cloud software company', score: 81, signals: ['Hiring surge', 'Product launch', 'Active on LinkedIn'], filterTags: ['vp_plus', 'fn-c-suite', 'seniority-vp-plus', 'loc-south'] },
+  { id: 'ld_941', name: 'Rebecca Liu', title: 'VP Marketing', company: 'SignalFire Analytics', signal: 'Marketing team expansion', signalType: 'expansion', rationale: 'VP Marketing expanding demand gen at data analytics company', score: 79, signals: ['Team expansion', 'Content marketing ramp', 'Active on LinkedIn'], filterTags: ['vp_plus', 'fn-marketing', 'seniority-vp-plus', 'loc-west'] },
+  { id: 'ld_942', name: 'Peter Grant', title: 'Head of Sales', company: 'ProspectIQ', signal: 'CRO hire + SDR openings', signalType: 'job_change', rationale: 'Head of Sales during GTM buildout at RevTech company', score: 77, signals: ['New CRO', 'SDR openings', 'Sales process overhaul'], filterTags: ['fn-sales', 'seniority-director', 'loc-northeast'] },
+  { id: 'ld_943', name: 'Diana Reeves', title: 'VP Operations', company: 'Beacon Health AI', signal: 'Series B + ops scaling', signalType: 'intent', rationale: 'VP Ops at funded HealthTech company scaling operations', score: 86, signals: ['Series B funding', 'Ops scaling', 'Active on LinkedIn'], filterTags: ['vp_plus', 'fn-revops', 'seniority-vp-plus', 'loc-northeast'] },
+  { id: 'ld_944', name: 'Ryan Stewart', title: 'Manager, Sales Development', company: 'DealEngine', signal: 'Building first SDR team', signalType: 'expansion', rationale: 'SDR manager building outbound engine at funded startup', score: 74, signals: ['First sales team', 'Series A funding', 'Active recruiting'], filterTags: ['fn-sales', 'seniority-manager', 'loc-bay-area'] },
 ];
 
 export const seedEvidence: Evidence[] = [
@@ -182,7 +236,7 @@ export const seedEvidence: Evidence[] = [
         jobTypeLabel: 'Outreach',
         scopeLabel: '8 drafts',
         updated: '12m ago',
-        status: 'Needs review',
+        status: 'Input required',
         preview: {
           type: 'facepile',
           items: [
@@ -202,7 +256,7 @@ export const seedEvidence: Evidence[] = [
         jobTypeLabel: 'Outreach',
         scopeLabel: '6 drafts',
         updated: '30m ago',
-        status: 'Needs review',
+        status: 'Input required',
         primaryCta: { label: 'Review', targetState: 'APPROVALS' },
       },
       {
@@ -212,7 +266,7 @@ export const seedEvidence: Evidence[] = [
         jobTypeLabel: 'Multithread',
         scopeLabel: 'Multithread plan',
         updated: '1h ago',
-        status: 'Blocked',
+        status: 'Input required',
         preview: {
           type: 'logopile',
           items: [
@@ -516,13 +570,25 @@ export const seedEvidence: Evidence[] = [
   {
     id: 'ev_outreach_drafts_01',
     type: 'OUTREACH_DRAFT_REVIEW',
-    title: 'Review drafts (12)',
-    subtitle: 'Connection requests, follow-up messages, and emails for 8 leads.',
+    title: 'Review drafts (42)',
+    subtitle: 'Connection requests, follow-up messages, and emails for 14 leads.',
     context: { jobId: 'job_workspace_outreach' },
     generatedAt: '2026-02-10T09:44:00-08:00',
-    outreachDrafts: seedOutreachDrafts,
+    outreachDrafts: allDrafts,
     leadListId: 'leadlist_west_smb_weekly_01',
-    leadCount: 8,
+    leadCount: 14,
+  },
+
+  // Schedule & Run
+  {
+    id: 'ev_schedule_and_run',
+    type: 'SCHEDULE_AND_RUN',
+    title: 'Schedule & Run',
+    subtitle: 'Review defaults and launch your outreach play',
+    context: { jobId: 'job_workspace_outreach' },
+    generatedAt: '2026-02-10T09:58:00-08:00',
+    leadCount: 14,
+    draftCount: 42,
   },
 
   // Execution Monitor
@@ -573,14 +639,324 @@ export const seedEvidence: Evidence[] = [
     title: 'Prioritized accounts — West SMB',
     subtitle: '20 accounts ranked by buying intent, engagement, and leadership signals',
     generatedAt: '2026-02-10T10:10:05-08:00',
+    bookSize: 134,
     filterChips: [
-      { id: 'high-engagement', label: 'High engagement', count: 7 },
-      { id: 'tech-alignment', label: 'Tech alignment', count: 5 },
+      { id: 'leadership-change', label: 'Leadership change', count: 12 },
       { id: 'recent-funding', label: 'Recent funding', count: 2 },
-      { id: 'leadership-change', label: 'Leadership change', count: 9 },
+      { id: 'not-touched-30d', label: 'Not touched in 30 days', count: 10 },
+      { id: 'expansion', label: 'Expansion', count: 4 },
     ],
     accountsPrioritized: prioritizedAccounts,
     findLeadsLabel: 'Next: Find leads in these accounts',
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // QUICK PLAY: Card-specific reasoning + account evidence
+  // ═══════════════════════════════════════════════════════
+
+  // Card 1: Bay Area AI — Reasoning
+  {
+    id: 'ev_quick_ai_growth_reasoning',
+    type: 'REASONING_ANIMATION',
+    title: 'Scanning Bay Area AI companies',
+    subtitle: 'Identifying fast-growing AI companies with buying signals',
+    generatedAt: new Date().toISOString(),
+    reasoningSteps: [
+      { label: 'Scanning AI companies in Bay Area', duration: 1500, icon: 'search' },
+      { label: 'Identifying growth signals', duration: 1500, icon: 'zap' },
+      { label: 'Prioritizing by intent', duration: 1500, icon: 'target' },
+    ],
+    reasoningAutoAdvanceEvidenceId: 'ev_quick_ai_growth_accounts',
+  },
+  // Card 1: Bay Area AI — Accounts
+  {
+    id: 'ev_quick_ai_growth_accounts',
+    type: 'ACCOUNTS_PRIORITIZED',
+    title: 'AI Growth — Bay Area',
+    subtitle: 'Fast-growing AI companies in the Bay Area',
+    generatedAt: new Date().toISOString(),
+    bookSize: 200,
+    filterChips: [
+      { id: 'region-bay-area', label: 'Bay Area', count: 13 },
+      { id: 'industry-ai', label: 'AI/ML', count: 11 },
+      { id: 'size-startup', label: '1–50 employees', count: 3 },
+      { id: 'size-small', label: '51–200', count: 3 },
+      { id: 'size-midsize', label: '201–500', count: 4 },
+      { id: 'size-growth', label: '501–1,000', count: 3 },
+      { id: 'leadership-change', label: 'Leadership change', count: 5 },
+      { id: 'recent-funding', label: 'Recent funding', count: 5 },
+      { id: 'hiring-surge', label: 'Hiring surge', count: 7 },
+      { id: 'not-touched-30d', label: 'Not touched in 30 days', count: 3 },
+    ],
+    appliedFilters: ['region-bay-area', 'industry-ai'],
+    accountsPrioritized: prioritizedAccounts,
+    findLeadsLabel: 'Next: Find leads in these accounts',
+  },
+
+  // Card 2: Mid-size Software — Reasoning
+  {
+    id: 'ev_quick_midsize_sw_reasoning',
+    type: 'REASONING_ANIMATION',
+    title: 'Scanning mid-size software companies',
+    subtitle: 'Finding software companies with 201–1,000 employees and buying signals',
+    generatedAt: new Date().toISOString(),
+    reasoningSteps: [
+      { label: 'Filtering by company size', duration: 1500, icon: 'search' },
+      { label: 'Scanning software industry signals', duration: 1500, icon: 'zap' },
+      { label: 'Ranking by intent', duration: 1500, icon: 'target' },
+    ],
+    reasoningAutoAdvanceEvidenceId: 'ev_quick_midsize_sw_accounts',
+  },
+  // Card 2: Mid-size Software — Accounts
+  {
+    id: 'ev_quick_midsize_sw_accounts',
+    type: 'ACCOUNTS_PRIORITIZED',
+    title: 'Mid-size Software — NA',
+    subtitle: 'Software companies with 201–1,000 employees across North America',
+    generatedAt: new Date().toISOString(),
+    bookSize: 180,
+    filterChips: [
+      { id: 'industry-saas', label: 'SaaS', count: 16 },
+      { id: 'region-bay-area', label: 'Bay Area', count: 4 },
+      { id: 'region-west', label: 'West', count: 6 },
+      { id: 'region-northeast', label: 'Northeast', count: 3 },
+      { id: 'region-south', label: 'South', count: 3 },
+      { id: 'region-midwest', label: 'Midwest', count: 2 },
+      { id: 'size-small', label: '51–200', count: 3 },
+      { id: 'size-midsize', label: '201–500', count: 8 },
+      { id: 'size-growth', label: '501–1,000', count: 5 },
+      { id: 'leadership-change', label: 'Leadership change', count: 8 },
+      { id: 'not-touched-30d', label: 'Not touched in 30 days', count: 5 },
+      { id: 'hiring-surge', label: 'Hiring surge', count: 4 },
+    ],
+    appliedFilters: ['industry-saas'],
+    accountsPrioritized: prioritizedAccounts,
+    findLeadsLabel: 'Next: Find leads in these accounts',
+  },
+
+  // Card 3: Hiring GTM — Reasoning
+  {
+    id: 'ev_quick_hiring_gtm_reasoning',
+    type: 'REASONING_ANIMATION',
+    title: 'Finding companies hiring GTM teams',
+    subtitle: 'Scanning for companies with active sales & marketing hiring',
+    generatedAt: new Date().toISOString(),
+    reasoningSteps: [
+      { label: 'Detecting hiring signals', duration: 1500, icon: 'search' },
+      { label: 'Analyzing GTM team expansion', duration: 1500, icon: 'zap' },
+      { label: 'Prioritizing high-intent accounts', duration: 1500, icon: 'target' },
+    ],
+    reasoningAutoAdvanceEvidenceId: 'ev_quick_hiring_gtm_accounts',
+  },
+  // Card 3: Hiring GTM — Accounts
+  {
+    id: 'ev_quick_hiring_gtm_accounts',
+    type: 'ACCOUNTS_PRIORITIZED',
+    title: 'Hiring GTM — All Territories',
+    subtitle: 'Companies actively expanding their sales teams',
+    generatedAt: new Date().toISOString(),
+    bookSize: 150,
+    filterChips: [
+      { id: 'hiring-surge', label: 'Hiring surge', count: 14 },
+      { id: 'region-bay-area', label: 'Bay Area', count: 5 },
+      { id: 'region-west', label: 'West', count: 3 },
+      { id: 'region-northeast', label: 'Northeast', count: 2 },
+      { id: 'region-south', label: 'South', count: 3 },
+      { id: 'region-midwest', label: 'Midwest', count: 1 },
+      { id: 'industry-ai', label: 'AI/ML', count: 5 },
+      { id: 'industry-saas', label: 'SaaS', count: 5 },
+      { id: 'industry-enterprise-sw', label: 'Enterprise Software', count: 3 },
+      { id: 'leadership-change', label: 'Leadership change', count: 5 },
+      { id: 'recent-funding', label: 'Recent funding', count: 4 },
+    ],
+    appliedFilters: ['hiring-surge'],
+    accountsPrioritized: prioritizedAccounts,
+    findLeadsLabel: 'Next: Find leads in these accounts',
+  },
+
+  // Card 4: Recently Funded — Reasoning
+  {
+    id: 'ev_quick_funded_reasoning',
+    type: 'REASONING_ANIMATION',
+    title: 'Scanning recently funded companies',
+    subtitle: 'Finding Series A–C companies with GTM expansion signals',
+    generatedAt: new Date().toISOString(),
+    reasoningSteps: [
+      { label: 'Detecting funding events', duration: 1500, icon: 'search' },
+      { label: 'Analyzing post-funding expansion', duration: 1500, icon: 'zap' },
+      { label: 'Prioritizing by timing', duration: 1500, icon: 'target' },
+    ],
+    reasoningAutoAdvanceEvidenceId: 'ev_quick_funded_accounts',
+  },
+  // Card 4: Recently Funded — Accounts
+  {
+    id: 'ev_quick_funded_accounts',
+    type: 'ACCOUNTS_PRIORITIZED',
+    title: 'Recently Funded (A–C)',
+    subtitle: 'Companies with Series A–C funding in the last 6 months',
+    generatedAt: new Date().toISOString(),
+    bookSize: 120,
+    filterChips: [
+      { id: 'recent-funding', label: 'Recent funding', count: 12 },
+      { id: 'region-bay-area', label: 'Bay Area', count: 4 },
+      { id: 'region-northeast', label: 'Northeast', count: 4 },
+      { id: 'region-south', label: 'South', count: 1 },
+      { id: 'region-west', label: 'West', count: 1 },
+      { id: 'region-midwest', label: 'Midwest', count: 1 },
+      { id: 'industry-ai', label: 'AI/ML', count: 3 },
+      { id: 'industry-fintech', label: 'FinTech', count: 2 },
+      { id: 'industry-healthtech', label: 'HealthTech', count: 2 },
+      { id: 'industry-saas', label: 'SaaS', count: 3 },
+      { id: 'hiring-surge', label: 'Hiring surge', count: 5 },
+    ],
+    appliedFilters: ['recent-funding'],
+    accountsPrioritized: prioritizedAccounts,
+    findLeadsLabel: 'Next: Find leads in these accounts',
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // QUICK PLAY: Card-specific leads evidence
+  // ═══════════════════════════════════════════════════════
+
+  // Card 1: Bay Area AI — Leads reasoning + discovery
+  {
+    id: 'ev_quick_ai_growth_leads_reasoning',
+    type: 'REASONING_ANIMATION',
+    title: 'Finding leads in Bay Area AI companies',
+    subtitle: 'Scanning decision makers, engagement signals, and warm paths',
+    generatedAt: new Date().toISOString(),
+    reasoningSteps: [
+      { label: 'Scanning prioritized accounts', duration: 1500, icon: 'search' },
+      { label: 'Identifying key decision makers', duration: 1500, icon: 'users' },
+      { label: 'Analyzing engagement signals', duration: 1500, icon: 'chart' },
+    ],
+    reasoningAutoAdvanceEvidenceId: 'ev_quick_ai_growth_leads',
+  },
+  {
+    id: 'ev_quick_ai_growth_leads',
+    type: 'LEADS_DISCOVERY',
+    title: 'Lead discovery — Bay Area AI',
+    subtitle: 'Sales leaders at your prioritized AI companies',
+    generatedAt: new Date().toISOString(),
+    leadsDiscovery: discoveryLeads,
+    totalLeadsCount: 40,
+    filterChips: [
+      { id: 'fn-sales', label: 'Sales', count: 12 },
+      { id: 'seniority-vp-plus', label: 'VP and above', count: 28 },
+      { id: 'seniority-director', label: 'Director', count: 10 },
+      { id: 'fn-finance', label: 'Finance', count: 7 },
+      { id: 'fn-revops', label: 'RevOps', count: 8 },
+      { id: 'fn-c-suite', label: 'C-Suite', count: 7 },
+      { id: 'job_changes', label: 'Job changes', count: 6 },
+    ],
+    appliedFilters: ['fn-sales'],
+    outreachLabel: 'Plan Outreach',
+  },
+
+  // Card 2: Mid-size Software — Leads
+  {
+    id: 'ev_quick_midsize_sw_leads_reasoning',
+    type: 'REASONING_ANIMATION',
+    title: 'Finding leads in mid-size software companies',
+    subtitle: 'Scanning decision makers with engagement signals',
+    generatedAt: new Date().toISOString(),
+    reasoningSteps: [
+      { label: 'Scanning prioritized accounts', duration: 1500, icon: 'search' },
+      { label: 'Identifying key decision makers', duration: 1500, icon: 'users' },
+      { label: 'Analyzing engagement signals', duration: 1500, icon: 'chart' },
+    ],
+    reasoningAutoAdvanceEvidenceId: 'ev_quick_midsize_sw_leads',
+  },
+  {
+    id: 'ev_quick_midsize_sw_leads',
+    type: 'LEADS_DISCOVERY',
+    title: 'Lead discovery — Mid-size Software',
+    subtitle: 'Leads across your prioritized software companies',
+    generatedAt: new Date().toISOString(),
+    leadsDiscovery: discoveryLeads,
+    totalLeadsCount: 40,
+    filterChips: [
+      { id: 'fn-sales', label: 'Sales', count: 12 },
+      { id: 'fn-finance', label: 'Finance', count: 7 },
+      { id: 'fn-revops', label: 'RevOps', count: 8 },
+      { id: 'fn-engineering', label: 'Engineering', count: 3 },
+      { id: 'fn-marketing', label: 'Marketing', count: 2 },
+      { id: 'seniority-vp-plus', label: 'VP and above', count: 28 },
+      { id: 'seniority-director', label: 'Director', count: 10 },
+      { id: 'job_changes', label: 'Job changes', count: 6 },
+    ],
+    outreachLabel: 'Plan Outreach',
+  },
+
+  // Card 3: Hiring GTM — Leads
+  {
+    id: 'ev_quick_hiring_gtm_leads_reasoning',
+    type: 'REASONING_ANIMATION',
+    title: 'Finding leads in companies hiring GTM',
+    subtitle: 'Scanning sales leaders at companies expanding GTM teams',
+    generatedAt: new Date().toISOString(),
+    reasoningSteps: [
+      { label: 'Scanning prioritized accounts', duration: 1500, icon: 'search' },
+      { label: 'Identifying GTM decision makers', duration: 1500, icon: 'users' },
+      { label: 'Analyzing engagement signals', duration: 1500, icon: 'chart' },
+    ],
+    reasoningAutoAdvanceEvidenceId: 'ev_quick_hiring_gtm_leads',
+  },
+  {
+    id: 'ev_quick_hiring_gtm_leads',
+    type: 'LEADS_DISCOVERY',
+    title: 'Lead discovery — GTM Hiring',
+    subtitle: 'Sales leaders at companies expanding their GTM teams',
+    generatedAt: new Date().toISOString(),
+    leadsDiscovery: discoveryLeads,
+    totalLeadsCount: 40,
+    filterChips: [
+      { id: 'fn-sales', label: 'Sales', count: 12 },
+      { id: 'seniority-vp-plus', label: 'VP and above', count: 28 },
+      { id: 'seniority-director', label: 'Director', count: 10 },
+      { id: 'seniority-manager', label: 'Manager', count: 1 },
+      { id: 'fn-c-suite', label: 'C-Suite', count: 7 },
+      { id: 'fn-revops', label: 'RevOps', count: 8 },
+      { id: 'job_changes', label: 'Job changes', count: 6 },
+    ],
+    appliedFilters: ['fn-sales'],
+    outreachLabel: 'Plan Outreach',
+  },
+
+  // Card 4: Recently Funded — Leads
+  {
+    id: 'ev_quick_funded_leads_reasoning',
+    type: 'REASONING_ANIMATION',
+    title: 'Finding leads at funded companies',
+    subtitle: 'Scanning decision makers at recently funded companies',
+    generatedAt: new Date().toISOString(),
+    reasoningSteps: [
+      { label: 'Scanning funded companies', duration: 1500, icon: 'search' },
+      { label: 'Identifying key decision makers', duration: 1500, icon: 'users' },
+      { label: 'Analyzing engagement signals', duration: 1500, icon: 'chart' },
+    ],
+    reasoningAutoAdvanceEvidenceId: 'ev_quick_funded_leads',
+  },
+  {
+    id: 'ev_quick_funded_leads',
+    type: 'LEADS_DISCOVERY',
+    title: 'Lead discovery — Funded Companies',
+    subtitle: 'Leads at recently funded companies',
+    generatedAt: new Date().toISOString(),
+    leadsDiscovery: discoveryLeads,
+    totalLeadsCount: 40,
+    filterChips: [
+      { id: 'fn-sales', label: 'Sales', count: 12 },
+      { id: 'fn-finance', label: 'Finance', count: 7 },
+      { id: 'fn-revops', label: 'RevOps', count: 8 },
+      { id: 'fn-c-suite', label: 'C-Suite', count: 7 },
+      { id: 'fn-engineering', label: 'Engineering', count: 3 },
+      { id: 'fn-marketing', label: 'Marketing', count: 2 },
+      { id: 'seniority-vp-plus', label: 'VP and above', count: 28 },
+      { id: 'seniority-director', label: 'Director', count: 10 },
+      { id: 'job_changes', label: 'Job changes', count: 6 },
+    ],
+    outreachLabel: 'Plan Outreach',
   },
 
   // Step 3: Reasoning animation — Leads
@@ -602,11 +978,15 @@ export const seedEvidence: Evidence[] = [
   {
     id: 'ev_leads_discovery',
     type: 'LEADS_DISCOVERY',
-    title: 'Lead discovery — 25 high-potential leads',
-    subtitle: '25 leads across your prioritized accounts',
+    title: 'Lead discovery — 40 high-potential leads',
+    subtitle: '40 leads across your prioritized accounts',
     generatedAt: '2026-02-10T10:11:05-08:00',
     leadsDiscovery: discoveryLeads,
-    totalLeadsCount: 25,
+    totalLeadsCount: 40,
+    filterChips: [
+      { id: 'vp_plus', label: 'VP and above', count: 28 },
+      { id: 'job_changes', label: 'Job changes', count: 6 },
+    ],
     quickResponses: [
       'Yes, apply those filters and prioritize job changes',
       'Focus only on VP level and above',
@@ -615,14 +995,14 @@ export const seedEvidence: Evidence[] = [
     agentOpeningMessage: 'I\'ve identified **25 high-potential leads** across your prioritized accounts. Here are some additional signals I recommend considering:\n\n• **Job changes in last 90 days** — Decision makers who recently joined\n• **Technology stack alignment** — Companies using complementary tools\n• **Engagement history** — Past interactions with your content\n\nShould I apply these filters to refine the list further?',
   },
 
-  // Step 5: Final leads list (all 25)
+  // Step 5: Final leads list (all 40)
   {
     id: 'ev_leads_final',
     type: 'LEADS_DISCOVERY',
-    title: 'Final lead list — 25 leads ready',
-    subtitle: '25 leads from 14 accounts, prioritized by engagement and intent',
+    title: 'Final lead list — 40 leads ready',
+    subtitle: '40 leads from 14 accounts, prioritized by engagement and intent',
     generatedAt: '2026-02-10T10:12:00-08:00',
     leadsDiscovery: discoveryLeads,
-    totalLeadsCount: 25,
+    totalLeadsCount: 40,
   },
 ];

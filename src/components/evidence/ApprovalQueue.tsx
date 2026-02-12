@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import type { Evidence, ApprovalItem } from '../../types/evidence';
+import { TERMS } from '../../constants/terms';
 import { useEvidenceStore } from '../../store/useEvidenceStore';
 import { useJobStore } from '../../store/useJobStore';
 import EvidenceHeader from './EvidenceHeader';
@@ -114,7 +115,7 @@ export default function ApprovalQueue({ evidence, hideHeader }: Props) {
   const checkCompletion = (updated: ApprovalItem[]) => {
     const allDone = updated.every((i) => i.status !== 'PENDING');
     if (allDone && evidence.context?.jobId) {
-      setJobStatus(evidence.context.jobId, 'COMPLETED');
+      setJobStatus(evidence.context.jobId, 'READY_TO_REVIEW');
       const approved = updated.filter((i) => i.status === 'APPROVED' || i.status === 'EDITED').length;
       const { jobsById } = useJobStore.getState();
       const job = jobsById[evidence.context.jobId];
@@ -151,7 +152,7 @@ export default function ApprovalQueue({ evidence, hideHeader }: Props) {
     <div className="flex h-full flex-col">
       {!hideHeader && (
         <EvidenceHeader
-          breadcrumb="Job • Needs Approval"
+          breadcrumb={TERMS.PLAY_NEEDS_APPROVAL}
           title={evidence.title}
         />
       )}
@@ -200,7 +201,7 @@ export default function ApprovalQueue({ evidence, hideHeader }: Props) {
                   {avatar ? (
                     <img src={avatar} alt={item.leadName} className="h-[36px] w-[36px] rounded-full object-cover" />
                   ) : (
-                    <div className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-li-bg-tertiary font-body text-[13px] font-semibold text-li-text-secondary">
+                    <div className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-li-bg-tertiary font-body text-ds-small font-semibold text-li-text-secondary">
                       {item.leadName.split(' ').map((n) => n[0]).join('')}
                     </div>
                   )}
@@ -215,10 +216,10 @@ export default function ApprovalQueue({ evidence, hideHeader }: Props) {
                   />
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate font-body text-[13px] font-semibold text-li-text-primary">
+                  <span className="truncate font-body text-ds-small font-semibold text-li-text-primary">
                     {item.leadName}
                   </span>
-                  <span className="truncate font-body text-[11px] text-li-text-tertiary">
+                  <span className="truncate font-body text-ds-small text-li-text-tertiary">
                     {item.accountName}
                   </span>
                 </div>
@@ -246,14 +247,14 @@ export default function ApprovalQueue({ evidence, hideHeader }: Props) {
                 })()}
                 <div className="flex flex-col">
                   <div className="flex items-center gap-[6px]">
-                    <span className="font-body text-[14px] font-semibold text-li-text-primary">
-                      {selectedDraft.leadName}
+<span className="font-body text-ds-base font-semibold text-li-text-primary">
+                    {selectedDraft.leadName}
                     </span>
                     <span className="rounded-[3px] bg-li-bg-tertiary px-[5px] py-[1px] font-body text-[10px] text-li-text-tertiary">
                       2nd
                     </span>
                   </div>
-                  <span className="font-body text-[11px] text-li-text-tertiary">
+                  <span className="font-body text-ds-small text-li-text-tertiary">
                     {selectedDraft.accountName}
                   </span>
                 </div>
@@ -271,7 +272,7 @@ export default function ApprovalQueue({ evidence, hideHeader }: Props) {
               {/* Message body */}
               <div className="flex-1 overflow-y-auto li-scrollbar px-[20px] py-[16px]">
                 {/* Subject line */}
-                <div className="mb-[12px] font-body text-[14px] font-semibold text-li-text-primary">
+                <div className="mb-[12px] font-body text-ds-base font-semibold text-li-text-primary">
                   Re: {selectedDraft.accountName} × Your Team
                 </div>
 
@@ -279,11 +280,11 @@ export default function ApprovalQueue({ evidence, hideHeader }: Props) {
                   <textarea
                     value={editingMessage}
                     onChange={(e) => setEditingMessage(e.target.value)}
-                    className="min-h-[200px] w-full resize-none rounded-[6px] border border-li-border-standard bg-white p-[12px] font-body text-[13px] leading-[1.7] text-li-text-primary focus:border-li-blue focus:outline-none"
+                    className="min-h-[200px] w-full resize-none rounded-[6px] border border-li-border-standard bg-white p-[12px] font-body text-ds-base leading-[1.7] text-li-text-primary focus:border-li-blue focus:outline-none"
                   />
                 ) : (
                   <div
-                    className="cursor-text font-body text-[13px] leading-[1.7] text-li-text-primary"
+                    className="cursor-text font-body text-ds-base leading-[1.7] text-li-text-primary"
                     onClick={() => setEditingMessage(selectedDraft.message)}
                   >
                     {selectedDraft.message}
@@ -292,7 +293,7 @@ export default function ApprovalQueue({ evidence, hideHeader }: Props) {
 
                 {/* AI disclaimer + feedback */}
                 <div className="mt-[16px] flex items-center justify-between">
-                  <span className="font-body text-[11px] text-li-text-disabled">
+                  <span className="font-body text-ds-small text-li-text-disabled">
                     Review AI-powered content carefully.
                   </span>
                   <div className="flex items-center gap-[4px]">
@@ -332,20 +333,20 @@ export default function ApprovalQueue({ evidence, hideHeader }: Props) {
 
             {/* Right: editing tools panel */}
             <div className="w-[300px] shrink-0 overflow-y-auto bg-white p-[20px] li-scrollbar">
-              <h4 className="font-display text-[15px] font-semibold text-li-text-primary">
+              <h4 className="font-display text-ds-large font-semibold text-li-text-primary">
                 How can I help you edit this message?
               </h4>
 
               {/* Quick editing */}
               <div className="mt-[16px]">
-                <span className="font-body text-[13px] font-semibold text-li-text-primary">
+                <span className="font-body text-ds-base font-semibold text-li-text-primary">
                   Quick editing
                 </span>
                 <div className="mt-[8px] flex flex-wrap gap-[6px]">
                   {QUICK_EDITS.map((label) => (
                     <button
                       key={label}
-                      className="rounded-[6px] border border-li-border-standard bg-white px-[12px] py-[6px] font-body text-[13px] text-li-text-primary transition-colors hover:border-li-text-tertiary hover:bg-li-bg-hover"
+                      className="rounded-[6px] border border-li-border-standard bg-white px-[12px] py-[6px] font-body text-ds-base text-li-text-primary transition-colors hover:border-li-text-tertiary hover:bg-li-bg-hover"
                     >
                       {label}
                     </button>
@@ -355,7 +356,7 @@ export default function ApprovalQueue({ evidence, hideHeader }: Props) {
 
               {/* Talking points */}
               <div className="mt-[20px]">
-                <span className="font-body text-[13px] font-semibold text-li-text-primary">
+                <span className="font-body text-ds-base font-semibold text-li-text-primary">
                   Talking points
                 </span>
                 <div className="mt-[8px] flex flex-col gap-[6px]">
@@ -366,7 +367,7 @@ export default function ApprovalQueue({ evidence, hideHeader }: Props) {
                         key={idx}
                         onClick={() => toggleTalkingPoint(idx)}
                         className={clsx(
-                          'flex items-center gap-[8px] rounded-[6px] border px-[12px] py-[8px] text-left font-body text-[13px] transition-colors',
+                          'flex items-center gap-[8px] rounded-[6px] border px-[12px] py-[8px] text-left font-body text-ds-base transition-colors',
                           isActive
                             ? 'border-li-text-tertiary bg-li-bg-secondary text-li-text-primary'
                             : 'border-li-border-standard bg-white text-li-text-secondary hover:border-li-text-tertiary'
@@ -384,7 +385,7 @@ export default function ApprovalQueue({ evidence, hideHeader }: Props) {
 
               {/* Custom instructions */}
               <div className="mt-[20px]">
-                <span className="font-body text-[13px] font-semibold text-li-text-primary">
+                <span className="font-body text-ds-base font-semibold text-li-text-primary">
                   Custom instructions
                 </span>
                 <div className="mt-[8px]">
@@ -393,7 +394,7 @@ export default function ApprovalQueue({ evidence, hideHeader }: Props) {
                       value={customInstruction}
                       onChange={(e) => setCustomInstruction(e.target.value)}
                       placeholder="e.g. Maintain a friendly yet professional tone."
-                      className="min-w-0 flex-1 font-body text-[13px] text-li-text-primary placeholder:text-li-text-disabled focus:outline-none"
+                      className="min-w-0 flex-1 font-body text-ds-base text-li-text-primary placeholder:text-li-text-disabled focus:outline-none"
                     />
                   </div>
                   {customInstruction && (

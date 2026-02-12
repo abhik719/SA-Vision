@@ -1,5 +1,6 @@
 import type { Evidence } from '../../types/evidence';
 import { useAppStore } from '../../store/useAppStore';
+import { TERMS } from '../../constants/terms';
 import { useJobStore } from '../../store/useJobStore';
 import EvidenceHeader from './EvidenceHeader';
 import Button from '../ui/Button';
@@ -25,7 +26,7 @@ export default function JobResults({ evidence, hideHeader }: Props) {
   return (
     <div className="flex h-full flex-col">
       {!hideHeader && (
-        <EvidenceHeader breadcrumb="Job • Results" title={evidence.title} />
+        <EvidenceHeader breadcrumb={TERMS.PLAY_RESULTS} title={evidence.title} />
       )}
 
       <div className="flex-1 overflow-y-auto li-scrollbar" style={{ padding: 'var(--evidence-padding-top) var(--evidence-padding-x) var(--evidence-padding-bottom)' }}>

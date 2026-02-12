@@ -66,7 +66,7 @@ export default function SignalFeedbackCard({ data, jobId }: Props) {
   return (
     <div className="mt-[4px] flex max-w-[90%] flex-col gap-[6px] rounded-ds-card border border-li-border-standard bg-white p-[12px]">
       <div className="flex items-center gap-[6px]">
-        <span className="font-body text-[11px] font-semibold uppercase tracking-wider text-li-text-tertiary">
+        <span className="font-body text-ds-small font-semibold uppercase tracking-wider text-li-text-tertiary">
           {isDown ? 'Adjust this signal' : 'Boost this signal'}
         </span>
       </div>
@@ -101,7 +101,7 @@ export default function SignalFeedbackCard({ data, jobId }: Props) {
                 }`}>
                   {option.label}
                 </span>
-                <span className="font-body text-[11px] text-li-text-tertiary">
+                <span className="font-body text-ds-small text-li-text-tertiary">
                   {option.description}
                 </span>
               </div>

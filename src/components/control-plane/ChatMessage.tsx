@@ -16,6 +16,17 @@ function formatTime(iso: string): string {
   });
 }
 
+/** Render markdown **bold** as <strong> and • bullets as styled bullets */
+function renderMarkdown(text: string) {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
 interface Props {
   message: Message;
   jobId: string;
@@ -66,7 +77,7 @@ export default function ChatMessage({ message, jobId, isLastAgentMessage }: Prop
             : 'bg-li-bg-secondary text-li-text-primary'
         )}
       >
-        {message.content}
+        {renderMarkdown(message.content)}
       </div>
 
       {/* Evidence links */}
@@ -74,7 +85,7 @@ export default function ChatMessage({ message, jobId, isLastAgentMessage }: Prop
         <button
           key={att.evidenceId}
           onClick={() => setCurrentEvidence(att.evidenceId)}
-          className="flex items-center gap-[4px] rounded-[4px] border border-li-border-standard bg-white px-[8px] py-[4px] font-body text-[11px] font-medium text-li-blue transition-colors hover:border-li-blue hover:bg-li-bg-hover"
+          className="flex items-center gap-[4px] rounded-[4px] border border-li-border-standard bg-white px-[8px] py-[4px] font-body text-ds-small font-semibold text-li-blue transition-colors hover:border-li-blue hover:bg-li-bg-hover"
         >
           <ArrowUpRight size={11} />
           {att.label}
@@ -111,7 +122,7 @@ export default function ChatMessage({ message, jobId, isLastAgentMessage }: Prop
               key={chip}
               onClick={() => isLastAgentMessage && handleChipClick(chip)}
               className={clsx(
-                'rounded-[16px] border px-[10px] py-[3px] font-body text-[11px] transition-colors',
+                'rounded-[16px] border px-[10px] py-[3px] font-body text-ds-small transition-colors',
                 isLastAgentMessage
                   ? 'border-li-blue/40 bg-white text-li-blue hover:bg-li-blue hover:text-white cursor-pointer'
                   : 'border-li-border-standard bg-li-bg-secondary text-li-text-disabled cursor-default'

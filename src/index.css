@@ -82,3 +82,66 @@
     background: rgba(0, 0, 0, 0.35);
   }
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Mission card shimmer — breathing glow */
+@keyframes missionPulse {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+
+@keyframes missionPulseAlt {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 0.75; }
+}
+
+.mission-shimmer {
+  overflow: hidden;
+}
+
+.mission-shimmer::before,
+.mission-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Primary glow — top-left corner */
+.mission-shimmer::before {
+  background: radial-gradient(
+    ellipse 70% 120% at 15% 30%,
+    rgba(10,102,194,0.22) 0%,
+    rgba(10,102,194,0.08) 50%,
+    transparent 80%
+  );
+  animation: missionPulse 3.5s ease-in-out infinite;
+}
+
+/* Secondary glow — bottom-right, offset timing */
+.mission-shimmer::after {
+  background: radial-gradient(
+    ellipse 60% 100% at 85% 70%,
+    rgba(10,102,194,0.16) 0%,
+    rgba(10,102,194,0.05) 50%,
+    transparent 75%
+  );
+  animation: missionPulseAlt 3.5s ease-in-out infinite 1.75s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mission-shimmer::before,
+  .mission-shimmer::after {
+    animation: none;
+  }
+  .mission-shimmer::before {
+    opacity: 0.5;
+  }
+  .mission-shimmer::after {
+    opacity: 0.3;
+  }
+}

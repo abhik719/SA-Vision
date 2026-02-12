@@ -27,13 +27,18 @@ export function ContextualSuggestions({ job, onSend }: Props) {
   }
 
   if (nextItems.length === 0 && askItems.length === 0) {
+    // Don't show generic fallback for RUNNING/QUEUED jobs — the agent is actively working
+    if (job.status === 'RUNNING' || job.status === 'QUEUED') {
+      return null;
+    }
+
     return (
       <div className="flex flex-wrap gap-[6px] px-[16px] pb-[8px]">
         {FALLBACK_CHIPS.map((chip) => (
           <button
             key={chip}
             onClick={() => onSend(chip)}
-            className="rounded-[4px] border border-li-border-standard bg-white px-[10px] py-[3px] font-body text-[11px] text-li-text-tertiary transition-colors hover:border-li-blue hover:text-li-blue"
+            className="rounded-[4px] border border-li-border-standard bg-white px-[10px] py-[3px] font-body text-ds-small text-li-text-tertiary transition-colors hover:border-li-blue hover:text-li-blue"
           >
             {chip}
           </button>
@@ -57,10 +62,10 @@ export function ContextualSuggestions({ job, onSend }: Props) {
               className="group flex items-center gap-[6px] rounded-[4px] px-[6px] py-[4px] text-left transition-colors hover:bg-li-bg-hover"
             >
               <Zap size={10} className="shrink-0 text-li-text-disabled group-hover:text-li-blue" />
-              <span className="truncate font-body text-[11px] leading-snug text-li-text-tertiary group-hover:text-li-text-secondary">
+              <span className="truncate font-body text-ds-small leading-snug text-li-text-tertiary group-hover:text-li-text-secondary">
                 {item.title}
               </span>
-              <span className="ml-auto shrink-0 rounded-[3px] bg-li-tag-bg px-[5px] py-[1px] font-body text-[9px] font-medium text-li-text-tertiary group-hover:bg-li-blue/10 group-hover:text-li-blue">
+              <span className="ml-auto shrink-0 rounded-[3px] bg-li-tag-bg px-[5px] py-[1px] font-body text-[9px] font-semibold text-li-text-tertiary group-hover:bg-li-blue/10 group-hover:text-li-blue">
                 {item.cta}
               </span>
             </button>
@@ -81,7 +86,7 @@ export function ContextualSuggestions({ job, onSend }: Props) {
               className="group flex items-center gap-[6px] rounded-[4px] px-[6px] py-[4px] text-left transition-colors hover:bg-li-bg-hover"
             >
               <MessageCircle size={10} className="shrink-0 text-li-text-disabled group-hover:text-li-text-tertiary" />
-              <span className="truncate font-body text-[11px] leading-snug text-li-text-tertiary group-hover:text-li-text-secondary">
+              <span className="truncate font-body text-ds-small leading-snug text-li-text-tertiary group-hover:text-li-text-secondary">
                 {item.question}
               </span>
             </button>

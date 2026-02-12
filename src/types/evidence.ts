@@ -111,7 +111,7 @@ export interface PileItem {
 }
 
 // Job Tile types (Needs attention section)
-export type JobTileStatus = 'Needs review' | 'Ready' | 'Running' | 'Blocked';
+export type JobTileStatus = 'New' | 'Queued' | 'Scheduled' | 'Input required' | 'Running' | 'Ready for review' | 'Archived';
 
 export interface JobTilePreview {
   type: 'facepile' | 'logopile';
@@ -196,6 +196,8 @@ export interface Evidence {
   leadCount?: number;
   // OUTREACH_DRAFT_REVIEW
   outreachDrafts?: OutreachDraft[];
+  // SCHEDULE_AND_RUN
+  draftCount?: number;
   // EXECUTION_MONITOR
   executionByLead?: LeadExecutionState[];
   executionEvents?: ExecutionEvent[];
@@ -207,6 +209,13 @@ export interface Evidence {
   filterChips?: FilterChip[];
   accountsPrioritized?: PrioritizedAccountRow[];
   findLeadsLabel?: string;
+  outreachLabel?: string;
+  /** Total accounts in the seller's book / territory (for breadcrumb context) */
+  bookSize?: number;
+  /** Filters pre-applied by the engine (syncs to breadcrumb filterStack) */
+  appliedFilters?: string[];
+  /** Dynamic extra columns added by play refinements */
+  extraColumns?: ExtraColumn[];
   // LEADS_DISCOVERY
   leadsDiscovery?: DiscoveryLeadRow[];
   totalLeadsCount?: number;
@@ -239,6 +248,14 @@ export interface PrioritizedAccountRow {
   industry: string;
   location: string;
   filterTags: string[];
+  /** Dynamic extra data keyed by column id */
+  extraData?: Record<string, string>;
+}
+
+export interface ExtraColumn {
+  id: string;
+  label: string;
+  width?: string;
 }
 
 // ── LEADS_DISCOVERY types ──
@@ -254,4 +271,5 @@ export interface DiscoveryLeadRow {
   signals?: string[];
   email?: string;
   linkedin?: string;
+  filterTags: string[];
 }

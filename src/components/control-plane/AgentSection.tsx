@@ -14,7 +14,7 @@ export function AgentSection({ title, count, defaultExpanded = true, children }:
   return (
     <div className="flex flex-col">
       <button
-        className="flex items-center gap-[4px] px-[16px] py-[6px] text-left font-body text-[11px] font-semibold uppercase tracking-wider text-li-text-tertiary transition-colors hover:text-li-text-secondary"
+        className="flex items-center gap-[4px] px-[16px] py-[6px] text-left font-body text-ds-small font-semibold uppercase tracking-wider text-li-text-tertiary transition-colors hover:text-li-text-secondary"
         onClick={() => setExpanded((v) => !v)}
       >
         {expanded

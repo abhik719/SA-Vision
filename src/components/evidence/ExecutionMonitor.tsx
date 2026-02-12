@@ -38,12 +38,14 @@ const STEP_ICONS: Record<string, typeof Mail> = {
   step_01: UserPlus,
   step_02: MessageSquare,
   step_03: Mail,
+  step_04: Send,
 };
 
 const STEP_LABELS: Record<string, string> = {
   step_01: 'Connect',
   step_02: 'LI Message',
   step_03: 'Email',
+  step_04: 'InMail',
 };
 
 export default function ExecutionMonitor({ evidence }: Props) {
@@ -59,7 +61,7 @@ export default function ExecutionMonitor({ evidence }: Props) {
   const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
   const addMessage = useJobStore((s) => s.addMessage);
 
-  const [showSchedule, setShowSchedule] = useState(!job || job.status === 'COMPLETED');
+  const [showSchedule, setShowSchedule] = useState(!job || job.status === 'READY_TO_REVIEW' || job.status === 'SCHEDULED');
   const [maxPerDay, setMaxPerDay] = useState(20);
   const [startTime, setStartTime] = useState('now');
   const simulationRan = useRef(false);
@@ -205,7 +207,7 @@ export default function ExecutionMonitor({ evidence }: Props) {
         id: `msg_exec_start_${Date.now()}`,
         role: 'agent',
         timestamp: new Date().toISOString(),
-        content: `Outreach job scheduled and running. Sending connection requests to ${byLead.length} leads. I'll notify you of accepts and replies.`,
+        content: `Outreach play scheduled and running. Sending connection requests to ${byLead.length} leads. I'll notify you of accepts and replies.`,
       });
     }
 
@@ -228,8 +230,8 @@ export default function ExecutionMonitor({ evidence }: Props) {
             <div className="mx-auto flex h-[48px] w-[48px] items-center justify-center rounded-full bg-li-blue/10 mb-[12px]">
               <Play size={24} className="text-li-blue" />
             </div>
-            <h3 className="font-display text-[16px] font-semibold text-li-text-primary">Schedule outreach</h3>
-            <p className="mt-[4px] font-body text-[13px] text-li-text-tertiary">
+            <h3 className="font-display text-ds-large font-semibold text-li-text-primary">Schedule outreach</h3>
+            <p className="mt-[4px] font-body text-ds-small text-li-text-tertiary">
               Confirm settings and start sending to {byLead.length} leads
             </p>
           </div>
@@ -284,7 +286,7 @@ export default function ExecutionMonitor({ evidence }: Props) {
             </button>
             <button
               onClick={handleScheduleAndRun}
-              className="flex items-center gap-[6px] rounded-[8px] bg-li-blue px-[16px] py-[8px] font-body text-[13px] font-medium text-white transition-colors hover:bg-li-blue-dark"
+              className="flex items-center gap-[6px] rounded-[8px] bg-li-blue px-[16px] py-[8px] font-body text-ds-small font-semibold text-white transition-colors hover:bg-li-blue-dark"
             >
               <Play size={14} />
               Schedule & run
@@ -301,7 +303,7 @@ export default function ExecutionMonitor({ evidence }: Props) {
       <div className="flex items-center gap-[16px] border-b border-li-border-standard px-[20px] py-[12px]">
         <div className="flex items-center gap-[6px]">
           <Zap size={14} className="text-li-blue" />
-          <span className="font-display text-[14px] font-semibold text-li-text-primary">Outreach running</span>
+          <span className="font-display text-ds-base font-semibold text-li-text-primary">Outreach running</span>
         </div>
         <div className="flex items-center gap-[12px] font-body text-[12px] text-li-text-tertiary">
           <span>Leads: <strong className="text-li-text-primary">{summary.total}</strong></span>
@@ -318,10 +320,10 @@ export default function ExecutionMonitor({ evidence }: Props) {
           <table className="w-full">
             <thead>
               <tr className="border-b border-li-border-standard bg-li-bg-secondary">
-                <th className="px-[12px] py-[8px] text-left font-body text-[11px] font-semibold text-li-text-tertiary">Lead</th>
-                <th className="px-[12px] py-[8px] text-left font-body text-[11px] font-semibold text-li-text-tertiary">Step</th>
-                <th className="px-[12px] py-[8px] text-left font-body text-[11px] font-semibold text-li-text-tertiary">Status</th>
-                <th className="px-[12px] py-[8px] text-left font-body text-[11px] font-semibold text-li-text-tertiary">Last event</th>
+                <th className="px-[12px] py-[8px] text-left font-body text-ds-small font-semibold text-li-text-tertiary">Lead</th>
+                <th className="px-[12px] py-[8px] text-left font-body text-ds-small font-semibold text-li-text-tertiary">Step</th>
+                <th className="px-[12px] py-[8px] text-left font-body text-ds-small font-semibold text-li-text-tertiary">Status</th>
+                <th className="px-[12px] py-[8px] text-left font-body text-ds-small font-semibold text-li-text-tertiary">Last event</th>
               </tr>
             </thead>
             <tbody>
@@ -340,7 +342,7 @@ export default function ExecutionMonitor({ evidence }: Props) {
                           {(lead?.fullName || leadExec.leadId).split(' ').map(n => n[0]).join('').slice(0, 2)}
                         </div>
                         <div>
-                          <div className="font-body text-[12px] font-medium text-li-text-primary">
+                          <div className="font-body text-ds-small font-semibold text-li-text-primary">
                             {lead?.fullName || leadExec.leadId}
                           </div>
                           <div className="font-body text-[10px] text-li-text-tertiary">
@@ -352,19 +354,19 @@ export default function ExecutionMonitor({ evidence }: Props) {
                     <td className="px-[12px] py-[8px]">
                       <div className="flex items-center gap-[4px]">
                         <StepIcon size={12} className="text-li-text-disabled" />
-                        <span className="font-body text-[11px] text-li-text-secondary">
+                        <span className="font-body text-ds-small text-li-text-secondary">
                           {STEP_LABELS[leadExec.currentStepId] || leadExec.currentStepId}
                         </span>
                       </div>
                     </td>
                     <td className="px-[12px] py-[8px]">
-                      <span className={`inline-flex items-center gap-[3px] rounded-[4px] px-[6px] py-[2px] font-body text-[10px] font-medium ${statusConfig.color}`}>
+                      <span className={`inline-flex items-center gap-[3px] rounded-[4px] px-[6px] py-[2px] font-body text-ds-small font-semibold ${statusConfig.color}`}>
                         <StatusIcon size={10} />
                         {statusConfig.label}
                       </span>
                     </td>
                     <td className="px-[12px] py-[8px]">
-                      <span className="font-body text-[11px] text-li-text-tertiary">
+                      <span className="font-body text-ds-small text-li-text-tertiary">
                         {lastEvent?.message || '—'}
                       </span>
                     </td>
@@ -380,7 +382,7 @@ export default function ExecutionMonitor({ evidence }: Props) {
           <div className="px-[12px] py-[10px]">
             <h4 className="font-display text-[12px] font-semibold text-li-text-secondary mb-[8px]">Events</h4>
             {events.length === 0 ? (
-              <p className="font-body text-[11px] text-li-text-disabled">Waiting for events...</p>
+              <p className="font-body text-ds-small text-li-text-disabled">Waiting for events...</p>
             ) : (
               <div className="space-y-[6px]">
                 {[...events].reverse().map((event) => {
@@ -397,7 +399,7 @@ export default function ExecutionMonitor({ evidence }: Props) {
                       <div className="flex items-start gap-[6px]">
                         <EventIcon size={12} className={isAccept || isReply ? 'text-green-600 mt-[2px]' : 'text-li-text-disabled mt-[2px]'} />
                         <div>
-                          <div className="font-body text-[11px] text-li-text-primary">{event.message}</div>
+                          <div className="font-body text-ds-small text-li-text-primary">{event.message}</div>
                           <div className="font-body text-[10px] text-li-text-disabled mt-[2px]">
                             {new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </div>

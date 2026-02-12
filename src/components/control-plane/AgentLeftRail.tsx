@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ArrowLeft, Home, Plus, Search, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { TERMS } from '../../constants/terms';
 import { useJobStore } from '../../store/useJobStore';
 import type { Job } from '../../types/job';
 import { AgentSection } from './AgentSection';
@@ -34,18 +35,24 @@ function classifyJobs(jobs: Job[]): ClassifiedJobs {
   const now = Date.now();
 
   for (const job of jobs) {
-    // Archived first
-    if (job.archived_at) {
+    // Archived first (explicit archived_at or ARCHIVED status)
+    if (job.archived_at || job.status === 'ARCHIVED') {
       result.archived.push(job);
       continue;
     }
-    // Monitoring (schedule-based)
-    if (job.schedule?.is_active) {
-      result.monitoring.push(job);
+    // Scheduled / Monitoring:
+    // - If the job has an active schedule AND is currently RUNNING → Monitoring (active run in progress)
+    // - If the job has an active schedule but is just QUEUED/SCHEDULED → Running/Queued (waiting for next run)
+    if (job.schedule?.is_active || job.status === 'SCHEDULED') {
+      if (job.status === 'RUNNING') {
+        result.monitoring.push(job);
+      } else {
+        result.runningQueued.push(job);
+      }
       continue;
     }
-    // Needs input / blocked
-    if (job.status === 'NEEDS_INPUT' || job.status === 'BLOCKED') {
+    // Needs input
+    if (job.status === 'NEEDS_INPUT') {
       result.needsInput.push(job);
       continue;
     }
@@ -55,30 +62,30 @@ function classifyJobs(jobs: Job[]): ClassifiedJobs {
       continue;
     }
     // Ready to review
-    if (job.status === 'READY_TO_REVIEW' || (job.status === 'COMPLETED' && job.has_unread_results)) {
+    if (job.status === 'READY_TO_REVIEW') {
       result.readyToReview.push(job);
       continue;
     }
-    // Ephemeral = recent answers
-    if (job.kind === 'ephemeral' && job.status === 'COMPLETED' && !job.archived_at) {
-      const expiry = job.expires_at ? new Date(job.expires_at).getTime() : Infinity;
-      if (expiry > now) {
+    // New — could be a workspace conversation or a newly created play
+    if (job.status === 'NEW') {
+      // Ephemeral new conversations go to recent answers
+      if (job.kind === 'ephemeral') {
+        const expiry = job.expires_at ? new Date(job.expires_at).getTime() : Infinity;
+        if (expiry > now) {
+          result.recentAnswers.push(job);
+          continue;
+        }
+      }
+      // Tracked conversations → recent answers
+      if (job.type === 'CONVERSATION') {
         result.recentAnswers.push(job);
         continue;
       }
-    }
-    // Completed tracked with no unread = could be a workspace conversation
-    if (job.status === 'COMPLETED' && job.type === 'CONVERSATION' && !job.archived_at) {
-      // Show workspace conversations in recent answers area
-      result.recentAnswers.push(job);
+      // Other new jobs → needs input (they need the user to start them)
+      result.needsInput.push(job);
       continue;
     }
-    // Completed non-conversation jobs just end up in archived conceptually
-    if (job.status === 'COMPLETED') {
-      result.archived.push(job);
-      continue;
-    }
-    // Fallback for cancelled
+    // Fallback
     result.archived.push(job);
   }
 
@@ -103,6 +110,7 @@ export function AgentLeftRail() {
   const selectJob = useAppStore((s) => s.selectJob);
   const goHome = useAppStore((s) => s.goHome);
   const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
+  const openRecurrenceDialog = useAppStore((s) => s.openRecurrenceDialog);
 
   const jobsById = useJobStore((s) => s.jobsById);
   const addMessage = useJobStore((s) => s.addMessage);
@@ -142,11 +150,8 @@ export function AgentLeftRail() {
     };
   }, [classified, searchQuery]);
 
-  const inboxCount =
-    filteredClassified.needsInput.length +
-    filteredClassified.runningQueued.length +
-    filteredClassified.readyToReview.length +
-    filteredClassified.monitoring.length;
+  // inboxCount available for future use
+  // const inboxCount = filteredClassified.needsInput.length + filteredClassified.runningQueued.length + filteredClassified.readyToReview.length + filteredClassified.monitoring.length;
 
   // ─── Handle actions ────────────────────────────────────────
 
@@ -165,6 +170,10 @@ export function AgentLeftRail() {
     } else {
       archiveJob(jobId);
     }
+  };
+
+  const handleMakeRecurring = (jobId: string) => {
+    openRecurrenceDialog(jobId);
   };
 
   const handleNewJob = () => {
@@ -206,7 +215,7 @@ export function AgentLeftRail() {
               {selectedJob.title}
             </span>
             {selectedJob.scopeOutput && (
-              <span className="truncate font-body text-[11px] text-li-text-tertiary">
+              <span className="truncate font-body text-ds-small text-li-text-tertiary">
                 {selectedJob.scopeOutput}
               </span>
             )}
@@ -231,166 +240,95 @@ export function AgentLeftRail() {
   return (
     <div className="flex h-full shrink-0 flex-col overflow-hidden bg-white" style={{ width: 411 }}>
       {/* Header */}
-      <div className="flex shrink-0 items-center gap-[6px] px-[12px] py-[10px]" style={{ borderBottom: '1px solid var(--border-standard)' }}>
-        {/* Search */}
-        <div className="relative flex flex-1 items-center">
-          <Search size={14} className="absolute left-[8px] text-li-text-disabled" />
-          <input
-            className="w-full rounded-ds-card border border-li-border-standard bg-li-bg-secondary py-[6px] pl-[28px] pr-[28px] font-body text-ds-base text-li-text-primary placeholder:text-li-text-disabled focus:border-li-blue focus:outline-none"
-            placeholder="Search jobs..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button
-              className="absolute right-[8px] text-li-text-tertiary hover:text-li-text-primary"
-              onClick={() => setSearchQuery('')}
-            >
-              <X size={14} />
-            </button>
-          )}
+      <div className="flex shrink-0 flex-col gap-[6px] px-[12px] py-[10px]" style={{ borderBottom: '1px solid var(--border-standard)' }}>
+        {/* Title row: "Your Plays" left, Home icon right */}
+        <div className="flex items-center justify-between">
+          <h3 className="font-display text-[16px] font-semibold leading-snug text-li-text-primary">Your Plays</h3>
+          <button
+            className="flex shrink-0 items-center justify-center rounded-ds-button p-[4px] text-li-text-tertiary transition-colors hover:bg-li-bg-hover hover:text-li-text-secondary"
+            title="Agent home"
+            onClick={() => goHome()}
+          >
+            <Home size={16} />
+          </button>
         </div>
+        {/* Search + New in one row */}
+        <div className="flex items-center gap-[6px]">
+          {/* Search */}
+          <div className="relative flex min-w-0 flex-1 items-center">
+            <Search size={13} className="absolute left-[7px] text-li-text-disabled" />
+            <input
+              className="w-full rounded-ds-card border border-li-border-standard bg-li-bg-secondary py-[4px] pl-[26px] pr-[26px] font-body text-ds-small text-li-text-primary placeholder:text-li-text-disabled focus:border-li-blue focus:outline-none"
+              placeholder={TERMS.SEARCH_PLAYS}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                className="absolute right-[7px] text-li-text-tertiary hover:text-li-text-primary"
+                onClick={() => setSearchQuery('')}
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
 
-        {/* Home button */}
-        <button
-          className="flex shrink-0 items-center justify-center rounded-ds-button p-[5px] text-li-text-tertiary transition-colors hover:bg-li-bg-hover hover:text-li-text-secondary"
-          title="Agent home"
-          onClick={() => goHome()}
-        >
-          <Home size={16} />
-        </button>
-
-        {/* New button */}
-        <button
-          className="flex shrink-0 items-center gap-[4px] rounded-ds-button bg-li-blue px-[10px] py-[5px] font-body text-ds-small font-semibold text-white transition-colors hover:bg-li-blue-dark"
-          onClick={handleNewJob}
-          title="New conversation"
-        >
-          <Plus size={14} />
-          New
-        </button>
+          {/* New button */}
+          <button
+            className="flex shrink-0 items-center gap-[4px] rounded-ds-button bg-li-blue px-[10px] py-[5px] font-body text-ds-small font-semibold text-white transition-colors hover:bg-li-blue-dark"
+            onClick={handleNewJob}
+            title="New conversation"
+          >
+            <Plus size={14} />
+            New
+          </button>
+        </div>
       </div>
 
       {/* Scrollable inbox sections */}
-      <div className="flex-1 overflow-y-auto li-scrollbar">
-        {inboxCount > 0 && (
-          <>
-            {filteredClassified.needsInput.length > 0 && (
-              <AgentSection title="Needs input" count={filteredClassified.needsInput.length} defaultExpanded>
-                {filteredClassified.needsInput.map((job) => (
-                  <AgentJobRow
-                    key={job.id}
-                    job={job}
-                    selected={false}
-                    onSelect={handleSelectJob}
-                    onArchive={handleArchive}
-                    onDelete={deleteJob}
-                    onRename={renameJob}
-                  />
+      {(() => {
+        const categories = [
+          { key: 'needsInput', title: 'Needs input', items: filteredClassified.needsInput, emptyMsg: 'No plays need input right now.' },
+          { key: 'runningQueued', title: 'Running / Queued', items: filteredClassified.runningQueued, emptyMsg: 'No plays running.' },
+          { key: 'readyToReview', title: 'Ready to review', items: filteredClassified.readyToReview, emptyMsg: 'No plays to review.' },
+          { key: 'monitoring', title: 'Monitoring', items: filteredClassified.monitoring, emptyMsg: 'No plays being monitored.' },
+        ];
+        const withItems = categories.filter((c) => c.items.length > 0);
+        const empty = categories.filter((c) => c.items.length === 0);
+
+        return (
+          <div className="flex flex-1 flex-col overflow-y-auto li-scrollbar">
+            {/* Categories with plays — expanded at top */}
+            {withItems.map((cat) => (
+              <AgentSection key={cat.key} title={cat.title} count={cat.items.length} defaultExpanded>
+                {cat.items.map((job) => (
+                  <AgentJobRow key={job.id} job={job} selected={false} onSelect={handleSelectJob} onArchive={handleArchive} onDelete={deleteJob} onRename={renameJob} onMakeRecurring={handleMakeRecurring} />
                 ))}
               </AgentSection>
-            )}
+            ))}
 
-            {filteredClassified.runningQueued.length > 0 && (
-              <AgentSection title="Running / Queued" count={filteredClassified.runningQueued.length} defaultExpanded>
-                {filteredClassified.runningQueued.map((job) => (
-                  <AgentJobRow
-                    key={job.id}
-                    job={job}
-                    selected={false}
-                    onSelect={handleSelectJob}
-                    onArchive={handleArchive}
-                    onDelete={deleteJob}
-                    onRename={renameJob}
-                  />
-                ))}
+            {/* Spacer pushes empty sections and archived to the bottom */}
+            <div className="flex-1" />
+
+            {/* Empty categories — collapsed, pinned to bottom */}
+            {empty.map((cat) => (
+              <AgentSection key={cat.key} title={cat.title} count={0} defaultExpanded={false}>
+                <p className="px-[16px] py-[8px] font-body text-[11px] text-li-text-disabled">{cat.emptyMsg}</p>
               </AgentSection>
-            )}
+            ))}
 
-            {filteredClassified.readyToReview.length > 0 && (
-              <AgentSection title="Ready to review" count={filteredClassified.readyToReview.length} defaultExpanded>
-                {filteredClassified.readyToReview.map((job) => (
-                  <AgentJobRow
-                    key={job.id}
-                    job={job}
-                    selected={false}
-                    onSelect={handleSelectJob}
-                    onArchive={handleArchive}
-                    onDelete={deleteJob}
-                    onRename={renameJob}
-                  />
-                ))}
-              </AgentSection>
-            )}
-
-            {filteredClassified.monitoring.length > 0 && (
-              <AgentSection title="Monitoring" count={filteredClassified.monitoring.length} defaultExpanded>
-                {filteredClassified.monitoring.map((job) => (
-                  <AgentJobRow
-                    key={job.id}
-                    job={job}
-                    selected={false}
-                    onSelect={handleSelectJob}
-                    onArchive={handleArchive}
-                    onDelete={deleteJob}
-                    onRename={renameJob}
-                  />
-                ))}
-              </AgentSection>
-            )}
-          </>
-        )}
-
-        {/* Empty state */}
-        {allJobs.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-[48px] text-center">
-            <p className="font-body text-ds-base text-li-text-tertiary">
-              No jobs yet. Start a conversation from Agent Home.
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Bottom-pinned: Recent conversations + Archived */}
-      {(filteredClassified.recentAnswers.length > 0 || filteredClassified.archived.length > 0) && (
-        <div className="shrink-0 overflow-y-auto li-scrollbar" style={{ maxHeight: '40%', borderTop: '1px solid var(--border-standard)' }}>
-          {filteredClassified.recentAnswers.length > 0 && (
-            <AgentSection
-              title="Recent conversations"
-              count={filteredClassified.recentAnswers.length}
-              defaultExpanded={false}
-            >
-              {filteredClassified.recentAnswers.map((job) => (
-                <AgentJobRow
-                  key={job.id}
-                  job={job}
-                  selected={false}
-                  onSelect={handleSelectJob}
-                  onArchive={handleArchive}
-                  onDelete={deleteJob}
-                  onRename={renameJob}
-                />
-              ))}
-            </AgentSection>
-          )}
-
-          {filteredClassified.archived.length > 0 && (
+            {/* Archived — always last, always collapsed */}
             <AgentSection title="Archived" count={filteredClassified.archived.length} defaultExpanded={false}>
-              {filteredClassified.archived.map((job) => (
-                <AgentJobRow
-                  key={job.id}
-                  job={job}
-                  selected={false}
-                  onSelect={handleSelectJob}
-                  onArchive={handleArchive}
-                  onDelete={deleteJob}
-                  onRename={renameJob}
-                />
-              ))}
+              {filteredClassified.archived.length > 0
+                ? filteredClassified.archived.map((job) => (
+                    <AgentJobRow key={job.id} job={job} selected={false} onSelect={handleSelectJob} onArchive={handleArchive} onDelete={deleteJob} onRename={renameJob} onMakeRecurring={handleMakeRecurring} />
+                  ))
+                : <p className="px-[16px] py-[8px] font-body text-[11px] text-li-text-disabled">No archived plays.</p>
+              }
             </AgentSection>
-          )}
-        </div>
-      )}
+          </div>
+        );
+      })()}
     </div>
   );
 }

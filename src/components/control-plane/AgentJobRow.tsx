@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { MoreHorizontal, Archive, Trash2, Pen } from 'lucide-react';
+import { MoreHorizontal, Archive, Trash2, Pen, RefreshCw } from 'lucide-react';
 import type { Job } from '../../types/job';
 
 interface AgentJobRowProps {
@@ -9,6 +9,7 @@ interface AgentJobRowProps {
   onArchive: (jobId: string) => void;
   onDelete: (jobId: string) => void;
   onRename: (jobId: string, title: string) => void;
+  onMakeRecurring?: (jobId: string) => void;
 }
 
 function timeAgo(dateStr: string): string {
@@ -26,18 +27,18 @@ function timeAgo(dateStr: string): string {
 
 function statusLabel(status: Job['status']): string {
   const map: Record<string, string> = {
-    NEEDS_INPUT: 'Needs input',
+    NEW: 'New',
     QUEUED: 'Queued',
+    SCHEDULED: 'Scheduled',
+    NEEDS_INPUT: 'Input required',
     RUNNING: 'Running',
-    READY_TO_REVIEW: 'Ready',
-    COMPLETED: 'Done',
-    BLOCKED: 'Blocked',
-    CANCELLED: 'Cancelled',
+    READY_TO_REVIEW: 'Ready for review',
+    ARCHIVED: 'Archived',
   };
   return map[status] || status;
 }
 
-export function AgentJobRow({ job, selected, onSelect, onArchive, onDelete, onRename }: AgentJobRowProps) {
+export function AgentJobRow({ job, selected, onSelect, onArchive, onDelete, onRename, onMakeRecurring }: AgentJobRowProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(job.title);
@@ -77,14 +78,13 @@ export function AgentJobRow({ job, selected, onSelect, onArchive, onDelete, onRe
   }, [job.messages, job.scopeOutput]);
 
   const needsAttention =
-    job.status === 'NEEDS_INPUT' || job.status === 'BLOCKED' ||
-    (job.status === 'COMPLETED' && job.has_unread_results);
-
-  const isScheduled = job.schedule?.is_active;
+    job.status === 'NEEDS_INPUT' ||
+    job.status === 'READY_TO_REVIEW' ||
+    (job.status === 'NEW' && job.has_unread_results);
 
   return (
     <div
-      className={`group relative flex cursor-pointer flex-col gap-[2px] px-[16px] py-[10px] transition-colors border-l-[3px] ${
+      className={`group relative flex cursor-pointer flex-col gap-[4px] px-[16px] py-[10px] transition-colors border-l-[3px] ${
         selected
           ? 'border-l-li-blue bg-li-bg-selected'
           : needsAttention
@@ -113,7 +113,7 @@ export function AgentJobRow({ job, selected, onSelect, onArchive, onDelete, onRe
             {job.title}
           </span>
         )}
-        <span className="shrink-0 font-body text-[11px] text-li-text-tertiary">
+        <span className="shrink-0 font-body text-ds-small text-li-text-tertiary">
           {timeAgo(job.updatedAt)}
         </span>
       </div>
@@ -125,15 +125,15 @@ export function AgentJobRow({ job, selected, onSelect, onArchive, onDelete, onRe
           <span className="mr-[2px] h-[6px] w-[6px] shrink-0 rounded-full bg-li-blue" />
         )}
 
-        {/* Status chip (only for non-completed or monitoring) */}
-        {(job.status !== 'COMPLETED' || isScheduled) && (
-          <span className="inline-flex items-center rounded-ds-tag px-[5px] py-[1px] font-body text-[10px] font-medium bg-li-tag-bg text-li-text-secondary">
-            {isScheduled ? `Monitor \u2022 ${job.schedule?.frequency}` : statusLabel(job.status)}
+        {/* Status chip */}
+        {job.status !== 'ARCHIVED' && (
+          <span className="inline-flex items-center rounded-ds-tag px-[5px] py-[1px] font-body text-[10px] font-semibold bg-li-tag-bg text-li-text-secondary">
+            {statusLabel(job.status)}
           </span>
         )}
 
         {job.scopeLabel && (
-          <span className="inline-flex items-center rounded-ds-tag px-[5px] py-[1px] font-body text-[10px] font-medium bg-li-tag-bg text-li-text-secondary">
+          <span className="inline-flex items-center rounded-ds-tag px-[5px] py-[1px] font-body text-[10px] font-semibold bg-li-tag-bg text-li-text-secondary">
             {job.scopeLabel}
           </span>
         )}
@@ -141,14 +141,14 @@ export function AgentJobRow({ job, selected, onSelect, onArchive, onDelete, onRe
 
       {/* Row 3: Recall line */}
       {recallLine && (
-        <span className="truncate font-body text-[11px] text-li-text-tertiary">
+        <span className="truncate font-body text-ds-small text-li-text-tertiary">
           {recallLine}
         </span>
       )}
 
       {/* Overflow menu trigger */}
       <button
-        className="absolute bottom-[8px] right-[12px] hidden shrink-0 rounded-[4px] p-[2px] text-li-text-tertiary transition-colors hover:bg-li-bg-hover hover:text-li-text-secondary group-hover:block"
+        className="absolute top-[28px] right-[12px] hidden shrink-0 rounded-[4px] p-[2px] text-li-text-tertiary transition-colors hover:bg-li-bg-hover hover:text-li-text-secondary group-hover:block"
         onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
       >
         <MoreHorizontal size={14} />
@@ -165,6 +165,12 @@ export function AgentJobRow({ job, selected, onSelect, onArchive, onDelete, onRe
             onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setRenaming(true); }}
           >
             <Pen size={12} /> Rename
+          </button>
+          <button
+            className="flex w-full items-center gap-[8px] px-[12px] py-[6px] text-left font-body text-ds-small text-li-text-primary hover:bg-li-bg-hover"
+            onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onMakeRecurring?.(job.id); }}
+          >
+            <RefreshCw size={12} /> Make recurring
           </button>
           <button
             className="flex w-full items-center gap-[8px] px-[12px] py-[6px] text-left font-body text-ds-small text-li-text-primary hover:bg-li-bg-hover"

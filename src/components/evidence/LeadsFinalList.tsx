@@ -122,7 +122,7 @@ export default function LeadsFinalList({ evidence, hideHeader }: Props) {
               key={f.id}
               onClick={() => setActiveFilter(activeFilter === f.id ? null : f.id)}
               className={clsx(
-                'rounded-full border px-[10px] py-[3px] font-body text-[11px] font-medium transition-all',
+                'rounded-full border px-[10px] py-[3px] font-body text-ds-small font-semibold transition-all',
                 activeFilter === f.id
                   ? 'border-li-blue bg-li-blue/10 text-li-blue'
                   : 'border-li-border-standard bg-white text-li-text-tertiary hover:bg-li-bg-hover'
@@ -163,7 +163,7 @@ export default function LeadsFinalList({ evidence, hideHeader }: Props) {
           onChange={toggleAll}
           className="accent-li-blue"
         />
-        <span className="font-body text-[13px] text-li-text-secondary">
+        <span className="font-body text-ds-small text-li-text-secondary">
           {selectedRows.size > 0
             ? `${selectedRows.size} selected`
             : `${sorted.length} lead${sorted.length !== 1 ? 's' : ''}`}
@@ -244,7 +244,7 @@ export default function LeadsFinalList({ evidence, hideHeader }: Props) {
                       <span
                         key={i}
                         className={clsx(
-                          'inline-flex rounded-full px-[6px] py-[1px] font-body text-[10px] font-medium',
+                          'inline-flex rounded-full px-[6px] py-[1px] font-body text-[10px] font-semibold',
                           SIGNAL_COLORS[lead.signalType] || 'bg-li-tag-bg text-li-text-tertiary'
                         )}
                       >
@@ -258,7 +258,7 @@ export default function LeadsFinalList({ evidence, hideHeader }: Props) {
                     )}
                   </div>
                 </td>
-                <td className="max-w-[200px] px-[12px] py-[10px] font-body text-[11px] text-li-text-disabled">
+                <td className="max-w-[200px] px-[12px] py-[10px] font-body text-ds-small text-li-text-disabled">
                   {lead.rationale}
                 </td>
                 <td className="px-[12px] py-[10px]">
@@ -272,7 +272,7 @@ export default function LeadsFinalList({ evidence, hideHeader }: Props) {
                         }}
                       />
                     </div>
-                    <span className="font-body text-[11px] font-semibold text-li-text-tertiary">
+                    <span className="font-body text-ds-small font-semibold text-li-text-tertiary">
                       {lead.score}
                     </span>
                   </div>

@@ -1,5 +1,6 @@
 import type { Evidence } from '../../types/evidence';
 import Button from '../ui/Button';
+import { TERMS } from '../../constants/terms';
 import { Play, Save } from 'lucide-react';
 
 interface Props {
@@ -27,8 +28,8 @@ export default function ConfigurationView({ evidence }: Props) {
           {/* Left: config form */}
           <div className="flex flex-col gap-[20px]">
             <div className="li-card flex flex-col gap-[16px] p-[20px]">
-              <h4 className="font-body text-[14px] font-semibold text-li-text-primary">
-                Job configuration
+              <h4 className="font-body text-ds-base font-semibold text-li-text-primary">
+                {TERMS.PLAY_CONFIGURATION}
               </h4>
 
               {fields.map((field) => (
@@ -38,7 +39,7 @@ export default function ConfigurationView({ evidence }: Props) {
                   </label>
                   {field.type === 'select' || field.type === 'multi-select' ? (
                     <select
-                      className="rounded-[6px] border border-li-border-standard bg-white px-[10px] py-[8px] font-body text-[14px] text-li-text-primary focus:border-li-blue focus:outline-none"
+                      className="rounded-[6px] border border-li-border-standard bg-white px-[10px] py-[8px] font-body text-ds-base text-li-text-primary focus:border-li-blue focus:outline-none"
                       defaultValue={field.value}
                     >
                       {field.options?.map((opt) => (
@@ -51,14 +52,14 @@ export default function ConfigurationView({ evidence }: Props) {
                     <input
                       type="number"
                       defaultValue={field.value}
-                      className="rounded-[6px] border border-li-border-standard bg-white px-[10px] py-[8px] font-body text-[14px] text-li-text-primary focus:border-li-blue focus:outline-none"
+                      className="rounded-[6px] border border-li-border-standard bg-white px-[10px] py-[8px] font-body text-ds-base text-li-text-primary focus:border-li-blue focus:outline-none"
                       placeholder={field.placeholder}
                     />
                   ) : (
                     <input
                       type="text"
                       defaultValue={field.value}
-                      className="rounded-[6px] border border-li-border-standard bg-white px-[10px] py-[8px] font-body text-[14px] text-li-text-primary focus:border-li-blue focus:outline-none"
+                      className="rounded-[6px] border border-li-border-standard bg-white px-[10px] py-[8px] font-body text-ds-base text-li-text-primary focus:border-li-blue focus:outline-none"
                       placeholder={field.placeholder}
                     />
                   )}
@@ -76,7 +77,7 @@ export default function ConfigurationView({ evidence }: Props) {
                     <input
                       type="text"
                       placeholder="e.g., West SMB book, Top 10 accounts"
-                      className="rounded-[6px] border border-li-border-standard bg-white px-[10px] py-[8px] font-body text-[14px] text-li-text-primary focus:border-li-blue focus:outline-none"
+                      className="rounded-[6px] border border-li-border-standard bg-white px-[10px] py-[8px] font-body text-ds-base text-li-text-primary focus:border-li-blue focus:outline-none"
                     />
                   </div>
                   {/* Personas */}
@@ -87,7 +88,7 @@ export default function ConfigurationView({ evidence }: Props) {
                     <input
                       type="text"
                       placeholder="e.g., VP Sales, Director of RevOps"
-                      className="rounded-[6px] border border-li-border-standard bg-white px-[10px] py-[8px] font-body text-[14px] text-li-text-primary focus:border-li-blue focus:outline-none"
+                      className="rounded-[6px] border border-li-border-standard bg-white px-[10px] py-[8px] font-body text-ds-base text-li-text-primary focus:border-li-blue focus:outline-none"
                     />
                   </div>
                   {/* Guardrails */}
@@ -98,7 +99,7 @@ export default function ConfigurationView({ evidence }: Props) {
                     <input
                       type="text"
                       placeholder="e.g., Skip contacts touched <30 days"
-                      className="rounded-[6px] border border-li-border-standard bg-white px-[10px] py-[8px] font-body text-[14px] text-li-text-primary focus:border-li-blue focus:outline-none"
+                      className="rounded-[6px] border border-li-border-standard bg-white px-[10px] py-[8px] font-body text-ds-base text-li-text-primary focus:border-li-blue focus:outline-none"
                     />
                   </div>
                   {/* Cadence */}
@@ -106,7 +107,7 @@ export default function ConfigurationView({ evidence }: Props) {
                     <label className="font-body text-[12px] font-semibold text-li-text-tertiary">
                       Cadence
                     </label>
-                    <select className="rounded-[6px] border border-li-border-standard bg-white px-[10px] py-[8px] font-body text-[14px] text-li-text-primary focus:border-li-blue focus:outline-none">
+                    <select className="rounded-[6px] border border-li-border-standard bg-white px-[10px] py-[8px] font-body text-ds-base text-li-text-primary focus:border-li-blue focus:outline-none">
                       <option>One-time</option>
                       <option>Daily</option>
                       <option>Weekly</option>
@@ -120,7 +121,7 @@ export default function ConfigurationView({ evidence }: Props) {
             {/* Primary + secondary CTAs */}
             <div className="flex items-center gap-[10px]">
               <Button>
-                <Play size={14} className="mr-[6px]" /> Run job
+                <Play size={14} className="mr-[6px]" /> {TERMS.RUN_PLAY}
               </Button>
               <Button variant="secondary">
                 <Save size={14} className="mr-[6px]" /> Save as template
@@ -134,7 +135,7 @@ export default function ConfigurationView({ evidence }: Props) {
               <h4 className="font-body text-[12px] font-semibold uppercase tracking-wider text-li-text-tertiary">
                 Preview
               </h4>
-              <p className="font-body text-[13px] text-li-text-tertiary">
+              <p className="font-body text-ds-small text-li-text-tertiary">
                 {previewLabel}
               </p>
 

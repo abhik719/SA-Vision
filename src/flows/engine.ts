@@ -2,10 +2,15 @@ import { useJobStore } from '../store/useJobStore';
 import { useAppStore } from '../store/useAppStore';
 import { useEvidenceStore } from '../store/useEvidenceStore';
 import { useOutreachStore } from '../store/useOutreachStore';
-import { emailFirstPlan, linkedInFirstPlan } from '../data/outreachLeads';
+import { emailFirstPlan, linkedInFirstPlan, seedOutreachLeads, seedOutreachDrafts } from '../data/outreachLeads';
 
 import type { Message } from '../types/thread';
 import type { Job } from '../types/job';
+
+/** Exported so OnboardingFlow can trigger the discovery flow after reasoning */
+export function flowQuickPlayStartExport(jobId: string, intentKey: string) {
+  flowQuickPlayStart(jobId, intentKey);
+}
 
 /**
  * Deterministic scripted "agent" — pattern matches on seller input and dispatches
@@ -167,8 +172,12 @@ export function processSellerMessage(jobId: string, content: string) {
     flowEditDrafts(jobId);
     return;
   }
-  if (lower.includes('approve all')) {
-    flowApproveAll(jobId);
+  if (lower.includes('approve all') || (lower.includes('schedule') && lower.includes('outreach'))) {
+    if (jobId === 'play_001') {
+      flowPlayApproveAndSchedule(jobId);
+    } else {
+      flowApproveAll(jobId);
+    }
     return;
   }
   if (lower.includes('recurring') || lower.includes('follow-up nudge')) {
@@ -186,6 +195,135 @@ export function processSellerMessage(jobId: string, content: string) {
   }
   if (lower.includes('multithread') || (lower.includes('opp') && lower.includes('thin'))) {
     flowMultithreadPlan(jobId);
+    return;
+  }
+
+  // ═══════════════════════════════════════════════════
+  // QUICK PLAY DISCOVERY: progressive dimension filtering
+  // These route discovery-phase messages from chat suggestions
+  // ═══════════════════════════════════════════════════
+
+  // Region discovery
+  if (lower.includes('focus on bay area') || (lower.includes('bay area') && lower.includes('companies'))) {
+    flowDiscoverAccountDimension(jobId, 'region-bay-area'); return;
+  }
+  if (lower.includes('focus on west coast') || (lower.includes('west coast') && lower.includes('companies'))) {
+    flowDiscoverAccountDimension(jobId, 'region-west'); return;
+  }
+  if (lower.includes('focus on northeast') || (lower.includes('northeast') && lower.includes('companies'))) {
+    flowDiscoverAccountDimension(jobId, 'region-northeast'); return;
+  }
+  if (lower.includes('focus on') && (lower.includes('south') && !lower.includes('southeast')) && lower.includes('companies')) {
+    flowDiscoverAccountDimension(jobId, 'region-south'); return;
+  }
+  if (lower.includes('focus on midwest') || (lower.includes('midwest') && lower.includes('companies'))) {
+    flowDiscoverAccountDimension(jobId, 'region-midwest'); return;
+  }
+
+  // Industry discovery
+  if (lower.includes('focus on ai') || lower.includes('focus on ai/ml') || (lower.includes('ai/ml') && lower.includes('companies'))) {
+    flowDiscoverAccountDimension(jobId, 'industry-ai'); return;
+  }
+  if (lower.includes('focus on saas') && lower.includes('companies')) {
+    flowDiscoverAccountDimension(jobId, 'industry-saas'); return;
+  }
+  if (lower.includes('focus on fintech') || (lower.includes('fintech') && lower.includes('companies'))) {
+    flowDiscoverAccountDimension(jobId, 'industry-fintech'); return;
+  }
+  if (lower.includes('focus on healthtech') || (lower.includes('healthtech') && lower.includes('companies'))) {
+    flowDiscoverAccountDimension(jobId, 'industry-healthtech'); return;
+  }
+  if (lower.includes('focus on enterprise software') || (lower.includes('enterprise software') && lower.includes('companies'))) {
+    flowDiscoverAccountDimension(jobId, 'industry-enterprise-sw'); return;
+  }
+
+  // Size discovery
+  if (lower.includes('startups') || (lower.includes('1') && lower.includes('50') && lower.includes('employee'))) {
+    flowDiscoverAccountDimension(jobId, 'size-startup'); return;
+  }
+  if (lower.includes('51') && lower.includes('200') && lower.includes('employee')) {
+    flowDiscoverAccountDimension(jobId, 'size-small'); return;
+  }
+  if ((lower.includes('201') || lower.includes('mid-size')) && lower.includes('500') && lower.includes('employee')) {
+    flowDiscoverAccountDimension(jobId, 'size-midsize'); return;
+  }
+  if ((lower.includes('501') || lower.includes('growth-stage') || lower.includes('growth stage')) && lower.includes('employee')) {
+    flowDiscoverAccountDimension(jobId, 'size-growth'); return;
+  }
+  if (lower.includes('1,000+') || lower.includes('1000+') || (lower.includes('enterprise') && lower.includes('employee'))) {
+    flowDiscoverAccountDimension(jobId, 'size-enterprise'); return;
+  }
+
+  // Lead function discovery
+  if (lower.includes('focus on sales leaders') || (lower.includes('focus on') && lower.includes('sales') && !lower.includes('operation'))) {
+    flowDiscoverLeadDimension(jobId, 'fn-sales'); return;
+  }
+  if (lower.includes('focus on finance') || (lower.includes('finance') && lower.includes('leaders'))) {
+    flowDiscoverLeadDimension(jobId, 'fn-finance'); return;
+  }
+  if (lower.includes('focus on revops') || (lower.includes('revops') && lower.includes('leaders'))) {
+    flowDiscoverLeadDimension(jobId, 'fn-revops'); return;
+  }
+  if (lower.includes('focus on c-suite') || lower.includes('c-suite executives')) {
+    flowDiscoverLeadDimension(jobId, 'fn-c-suite'); return;
+  }
+  if (lower.includes('focus on engineering') || (lower.includes('engineering') && lower.includes('leaders'))) {
+    flowDiscoverLeadDimension(jobId, 'fn-engineering'); return;
+  }
+
+  // Lead seniority discovery
+  if (lower.includes('vp level and above only') || lower.includes('vp and above only')) {
+    flowDiscoverLeadDimension(jobId, 'seniority-vp-plus'); return;
+  }
+  if (lower.includes('director level') || lower.includes('director+') || lower.includes('director and above')) {
+    flowDiscoverLeadDimension(jobId, 'seniority-director'); return;
+  }
+  if (lower.includes('manager level') || lower.includes('manager+') || lower.includes('manager and above')) {
+    flowDiscoverLeadDimension(jobId, 'seniority-manager'); return;
+  }
+
+  // Skip discovery — jump to signals for accounts
+  if (lower.includes('skip') && lower.includes('signal') && !lower.includes('find leads')) {
+    const job = useJobStore.getState().jobsById[jobId];
+    const intentKey = job?.scope?.intentKey || '';
+    if (intentKey && CARD_CONFIG[intentKey]) {
+      transitionToSignalFilters(jobId, intentKey);
+      return;
+    }
+  }
+
+  // Skip signals — find leads now
+  if (lower.includes('skip') && lower.includes('find leads')) {
+    flowPlayFindLeads(jobId);
+    return;
+  }
+
+  // Skip lead discovery — proceed to outreach
+  if (lower.includes('skip') && lower.includes('proceed to outreach')) {
+    flowRefineLeads(jobId, 'proceed');
+    return;
+  }
+
+  // ═══════════════════════════════════════════════════
+  // PLAY WORKSPACE: deterministic play_001 refinements
+  // These must be checked BEFORE generic account flows
+  // ═══════════════════════════════════════════════════
+
+  // Play step 1a: Filter leadership changes in past 60 days
+  if (lower.includes('leadership') && lower.includes('60 day')) {
+    flowPlayLeadershipFilter(jobId);
+    return;
+  }
+
+  // Play step 1b: Filter accounts not touched in 30 days
+  if ((lower.includes('haven\'t touched') || lower.includes('not touched') || lower.includes('havent touched')) && lower.includes('30 day')) {
+    flowPlayNotTouched30Filter(jobId);
+    return;
+  }
+
+  // Play step 2: "Look for leads from these accounts" / "Find leads in these X prioritized accounts"
+  if (lower.includes('look for leads') || (lower.includes('find leads') && (lower.includes('these accounts') || lower.includes('prioritized accounts') || (lower.includes('these') && lower.includes('account'))))) {
+    flowPlayFindLeads(jobId);
     return;
   }
 
@@ -218,8 +356,39 @@ export function processSellerMessage(jobId: string, content: string) {
     flowRefineLeads(jobId, 'job_changes');
     return;
   }
-  if (lower.includes('vp level') || lower.includes('vp and above')) {
+  if ((lower.includes('vp level') || lower.includes('vp and above')) && !lower.includes('only')) {
     flowRefineLeads(jobId, 'vp_plus');
+    return;
+  }
+  // Sequence manipulation: lead with email instead of connection request
+  if (lower.includes('lead with email') || (lower.includes('email') && lower.includes('day 1') && lower.includes('instead'))) {
+    flowSequenceSwapToEmail(jobId);
+    return;
+  }
+  // Sequence manipulation: revert to connection request first
+  if ((lower.includes('go back') || lower.includes('revert')) && lower.includes('connection request')) {
+    flowSequenceRevertToLinkedIn(jobId);
+    return;
+  }
+  // Sequence manipulation: drop InMail step
+  if (lower.includes('drop') && lower.includes('inmail')) {
+    flowSequenceDropInmail(jobId);
+    return;
+  }
+  // Sequence manipulation: add InMail back
+  if (lower.includes('add') && lower.includes('inmail')) {
+    flowSequenceAddInmailBack(jobId);
+    return;
+  }
+  // Sequence manipulation: shorten wait between steps
+  if (lower.includes('shorten') && lower.includes('wait')) {
+    flowSequenceShortenWait(jobId);
+    return;
+  }
+
+  // "Looks good, draft the messages" — advance from outreach plan to drafts
+  if (lower.includes('looks good') && lower.includes('draft')) {
+    flowPlayDraftMessages(jobId);
     return;
   }
   if (lower.includes('looks good') || lower.includes('let\'s proceed') || lower.includes('lets proceed')) {
@@ -356,7 +525,7 @@ function createAndRunChildJob(
   }
 
   setTimeout(() => {
-    setJobStatus(childId, 'COMPLETED');
+    setJobStatus(childId, 'READY_TO_REVIEW');
     updateJobProgress(childId, stageCount - 1);
     setJobEvidence(childId, config.evidenceId);
     const { updateJob } = useJobStore.getState();
@@ -1058,7 +1227,7 @@ function flowCreateRecurringJob(jobId: string) {
       kind: 'tracked',
       type: 'DRAFT_OUTREACH',
       title: 'Follow-up nudges (LinkedIn)',
-      status: 'COMPLETED',
+      status: 'SCHEDULED',
       has_unread_results: false,
       createdAt: now,
       updatedAt: now,
@@ -1215,22 +1384,24 @@ function flowPrioritizeAccounts(jobId: string) {
 }
 
 function flowFilterLeadership(jobId: string) {
-  // Dynamically create a filtered evidence view for leadership changes
+  // Create evidence view with leadership-change filter pre-applied via appliedFilters
   const { setEvidence: setEv } = useEvidenceStore.getState();
   const baseEvidence = useEvidenceStore.getState().evidenceById['ev_prioritize_accounts'];
 
   if (baseEvidence && baseEvidence.accountsPrioritized) {
-    const filtered = baseEvidence.accountsPrioritized.filter(
-      (a) => a.filterTags.includes('leadership-change')
-    );
+    const matchCount = baseEvidence.accountsPrioritized.filter(
+      (a) => a.filterTags.includes('leadership-change') || a.signalType === 'leadership'
+    ).length;
     setEv('ev_prioritize_leadership', {
       id: 'ev_prioritize_leadership',
       type: 'ACCOUNTS_PRIORITIZED',
-      title: 'Accounts with leadership changes \u2014 last 30 days',
-      subtitle: `${filtered.length} accounts with recent executive moves (VP+ hired, promoted, or departed)`,
+      title: 'Accounts with leadership changes \u2014 last 60 days',
+      subtitle: `${matchCount} accounts with recent executive moves (VP+ hired, promoted, or departed)`,
       generatedAt: new Date().toISOString(),
-      filterChips: [],
-      accountsPrioritized: filtered,
+      filterChips: baseEvidence.filterChips || [],
+      accountsPrioritized: baseEvidence.accountsPrioritized,
+      bookSize: baseEvidence.bookSize,
+      appliedFilters: ['leadership-change'],
       findLeadsLabel: 'Find leads in these accounts',
     });
   }
@@ -1258,35 +1429,51 @@ function flowFilterLeadership(jobId: string) {
 }
 
 function flowFilterCrmOpps(jobId: string) {
-  // Dynamically create a filtered evidence view for CRM opportunities
+  // Create evidence view with CRM filter pre-applied via appliedFilters
   const { setEvidence: setEv } = useEvidenceStore.getState();
 
-  // Get whatever is currently shown (could be full list or leadership-filtered)
+  // Get the base evidence (always use the full accounts set)
+  const baseEvidence = useEvidenceStore.getState().evidenceById['ev_prioritize_accounts'];
   const leadershipEvidence = useEvidenceStore.getState().evidenceById['ev_prioritize_leadership'];
-  const baseEvidence = leadershipEvidence || useEvidenceStore.getState().evidenceById['ev_prioritize_accounts'];
+  const fromLeadership = !!leadershipEvidence;
 
-  // CRM Active Opportunity accounts
-  const crmOppAccountIds = new Set(['acc_01', 'acc_03', 'acc_06', 'acc_11', 'acc_13', 'acc_18']);
+  // Build the applied filters stack — add CRM on top of any previous filters
+  const prevFilters = leadershipEvidence?.appliedFilters || [];
+  const appliedFilters = [...prevFilters, 'crm-active'];
 
   if (baseEvidence && baseEvidence.accountsPrioritized) {
-    const filtered = baseEvidence.accountsPrioritized.filter(
-      (a) => crmOppAccountIds.has(a.id)
+    // Add crm-active tag to relevant accounts so the filter logic picks them up
+    const crmOppAccountIds = new Set(['acc_01', 'acc_03', 'acc_06', 'acc_11', 'acc_13', 'acc_18']);
+    const accountsWithCrmTag = baseEvidence.accountsPrioritized.map((a) =>
+      crmOppAccountIds.has(a.id) && !a.filterTags.includes('crm-active')
+        ? { ...a, filterTags: [...a.filterTags, 'crm-active'] }
+        : a
     );
+
+    const matchCount = accountsWithCrmTag.filter((a) =>
+      appliedFilters.every((f) => a.filterTags.includes(f) || a.signalType === f)
+    ).length;
+
+    // Augment filter chips with the CRM chip
+    const baseChips = baseEvidence.filterChips || [];
+    const crmChip = { id: 'crm-active', label: 'Active CRM opportunity', count: accountsWithCrmTag.filter((a) => a.filterTags.includes('crm-active')).length };
+    const chips = baseChips.some((c) => c.id === 'crm-active') ? baseChips : [...baseChips, crmChip];
+
     setEv('ev_prioritize_crm', {
       id: 'ev_prioritize_crm',
       type: 'ACCOUNTS_PRIORITIZED',
       title: 'Accounts with CRM opportunities + leadership changes',
-      subtitle: `${filtered.length} accounts with active pipeline and recent executive moves`,
+      subtitle: `${matchCount} accounts with active pipeline and recent executive moves`,
       generatedAt: new Date().toISOString(),
-      filterChips: [],
-      accountsPrioritized: filtered,
+      filterChips: chips,
+      accountsPrioritized: accountsWithCrmTag,
+      bookSize: baseEvidence.bookSize,
+      appliedFilters,
       findLeadsLabel: 'Find leads in these accounts',
     });
   }
 
   setTimeout(() => {
-    // Count depends on whether we're filtering from leadership or full
-    const fromLeadership = !!leadershipEvidence;
     const count = fromLeadership ? 4 : 6;
 
     addAgentMessage(
@@ -1350,32 +1537,97 @@ function flowFindLeadsInAccounts(jobId: string, content: string) {
 }
 
 function flowRefineLeads(jobId: string, refinement: 'job_changes' | 'vp_plus' | 'proceed') {
-  setTimeout(() => {
-    if (refinement === 'proceed') {
-      addAgentMessage(jobId, "Great! Your list of **25 leads** is ready as-is. Here's what I recommend next:");
-    } else {
-      const filterDesc = refinement === 'job_changes'
-        ? 'prioritizing recent job changes and strong engagement signals'
-        : 'filtering to VP level and above';
-      addAgentMessage(jobId, `Perfect! I've updated the lead list, ${filterDesc}.`);
-    }
-    updateJobSuggestions(jobId, [], []);
-  }, 600);
+  const { setEvidence: setEv } = useEvidenceStore.getState();
+  // Use the latest filtered evidence if available, otherwise the base
+  const filteredEvidence = useEvidenceStore.getState().evidenceById['ev_play_leads_filtered'];
+  const baseEvidence = filteredEvidence || useEvidenceStore.getState().evidenceById['ev_leads_discovery'];
 
-  setTimeout(() => {
-    addAgentMessage(
-      jobId,
-      "\u2705 Your final list of **25 leads** is ready!\n\n**Recommended next steps:**\n\u2022 **Save this list** to track engagement and outcomes over time\n\u2022 **Start an outreach campaign** with personalized messaging based on the signals we identified\n\nWhat would you like to do?"
-    );
-    setEvidence('ev_leads_final');
-    updateJobSuggestions(jobId,
-      [
-        { id: 'ns_save', title: 'Save this lead list', why: 'Track engagement and outcomes over time', cta: 'Save', prompt: 'Save this lead list' },
-        { id: 'ns_outreach', title: 'Start outreach campaign', why: 'Personalized messaging based on signals', cta: 'Run', prompt: 'Start outreach campaign for these leads' },
-      ],
-      []
-    );
-  }, 2200);
+  if (refinement === 'proceed') {
+    // Calculate current visible lead count for the message
+    let proceedCount = 25;
+    if (baseEvidence?.leadsDiscovery) {
+      let vis = baseEvidence.leadsDiscovery;
+      for (const f of (baseEvidence.appliedFilters || [])) {
+        vis = vis.filter((l: { filterTags: string[] }) => l.filterTags.includes(f));
+      }
+      proceedCount = vis.length;
+    }
+    // Advance directly to outreach planning
+    setTimeout(() => {
+      addAgentMessage(jobId, `Great \u2014 your **${proceedCount} leads** are locked in. Moving to outreach planning now...`);
+      updateJobSuggestions(jobId, [], []);
+    }, 600);
+
+    // Kick off the outreach plan flow after a brief pause
+    setTimeout(() => {
+      flowStartOutreachFromLeads(jobId);
+    }, 1800);
+    return;
+  }
+
+  // Apply filter via appliedFilters pattern (same as accounts breadcrumb)
+  const filterId = refinement === 'job_changes' ? 'job_changes' : 'vp_plus';
+  const filterLabel = refinement === 'job_changes' ? 'job changes' : 'VP level and above';
+
+  if (baseEvidence && baseEvidence.leadsDiscovery) {
+    const prevFilters = baseEvidence.appliedFilters || [];
+    const appliedFilters = prevFilters.includes(filterId)
+      ? prevFilters
+      : [...prevFilters, filterId];
+
+    // Calculate the filtered count for the agent message
+    let visible = baseEvidence.leadsDiscovery;
+    for (const f of appliedFilters) {
+      visible = visible.filter((l: { filterTags: string[] }) => l.filterTags.includes(f));
+    }
+
+    setEv('ev_play_leads_filtered', {
+      id: 'ev_play_leads_filtered',
+      type: 'LEADS_DISCOVERY',
+      title: `Leads — ${filterLabel}`,
+      subtitle: `${visible.length} leads matching your filters`,
+      generatedAt: new Date().toISOString(),
+      leadsDiscovery: baseEvidence.leadsDiscovery,
+      totalLeadsCount: baseEvidence.totalLeadsCount || baseEvidence.leadsDiscovery.length,
+      filterChips: baseEvidence.filterChips || [],
+      appliedFilters,
+    });
+
+    setTimeout(() => {
+      const filterDesc = refinement === 'job_changes'
+        ? 'prioritizing recent job changes'
+        : 'filtering to VP level and above';
+      addAgentMessage(jobId, `Filtered to **${visible.length} leads**, ${filterDesc}.`);
+      setEvidence('ev_play_leads_filtered');
+      updateJobSuggestions(jobId, [], []);
+    }, 600);
+
+    // Build remaining filter suggestions
+    const allChips = baseEvidence.filterChips || [];
+    const remainingFilters = allChips.filter((c: { id: string }) => !appliedFilters.includes(c.id));
+
+    setTimeout(() => {
+      const suggestions = remainingFilters.map((c: { id: string; label: string }) => ({
+        id: `ns_filter_${c.id}`,
+        title: c.label,
+        why: `Further narrow by ${c.label.toLowerCase()}`,
+        cta: 'Filter',
+        prompt: c.id === 'vp_plus' ? 'VP level and above only' : 'Apply those filters — prioritize job changes',
+      }));
+
+      addAgentMessage(
+        jobId,
+        `\u2705 **${visible.length} leads** ready.\n\nWhat would you like to do next?`
+      );
+      updateJobSuggestions(jobId,
+        [
+          ...suggestions,
+          { id: 'ns_outreach', title: 'Start outreach campaign', why: `Personalized messaging for ${visible.length} leads`, cta: 'Run', prompt: 'Start outreach campaign for these leads' },
+        ],
+        []
+      );
+    }, 2200);
+  }
 }
 
 function flowSaveLeadList(jobId: string) {
@@ -1392,22 +1644,1028 @@ function flowSaveLeadList(jobId: string) {
 }
 
 function flowStartOutreachFromLeads(jobId: string) {
+  // Progress the current play to the outreach plan phase (not a new job)
+  const { setEvidence: setEv } = useEvidenceStore.getState();
+  const { setPlan } = useOutreachStore.getState();
+
+  // Check for quick play card config
+  const job = useJobStore.getState().jobsById[jobId];
+  const intentKey = job?.scope?.intentKey || '';
+  const cardConfig = CARD_CONFIG[intentKey];
+
+  // Determine the current filtered lead count from the latest leads evidence
+  const quickFilteredLeadsEv = useEvidenceStore.getState().evidenceById['ev_quick_leads_filtered'];
+  const filteredLeadsEv = useEvidenceStore.getState().evidenceById['ev_play_leads_filtered'];
+  const cardLeadsEv = cardConfig ? useEvidenceStore.getState().evidenceById[cardConfig.leadsEvId] : null;
+  const baseLeadsEv = useEvidenceStore.getState().evidenceById['ev_leads_discovery'];
+  const leadsEvidence = (cardConfig ? quickFilteredLeadsEv : filteredLeadsEv) || cardLeadsEv || baseLeadsEv;
+
+  let leadCount = 25; // fallback
+  if (leadsEvidence?.leadsDiscovery) {
+    let visible = leadsEvidence.leadsDiscovery;
+    const filters = leadsEvidence.appliedFilters || [];
+    for (const f of filters) {
+      visible = visible.filter((l: { filterTags: string[] }) => l.filterTags.includes(f));
+    }
+    leadCount = visible.length;
+  }
+
+  // Create a default outreach plan in the outreach store for the play job
+  const playOutreachPlan = {
+    steps: [
+      { id: 'play_s1', channel: 'CONNECT_REQUEST' as const, label: 'Connection request', dayOffset: 0, condition: null, parentStepId: null, requiresApproval: true },
+      { id: 'play_s2', channel: 'LINKEDIN_MESSAGE' as const, label: 'LinkedIn message', dayOffset: 2, condition: 'IF_CONNECT_ACCEPTED' as const, parentStepId: 'play_s1', requiresApproval: true },
+      { id: 'play_s3', channel: 'EMAIL' as const, label: 'Email (reason-for-now)', dayOffset: 3, condition: 'IF_NOT_ACCEPTED' as const, parentStepId: 'play_s1', requiresApproval: true, addToCadence: true },
+      { id: 'play_s4', channel: 'INMAIL' as const, label: 'InMail', dayOffset: 5, condition: 'IF_NO_REPLY' as const, parentStepId: 'play_s3', requiresApproval: true },
+      { id: 'play_s5', channel: 'EMAIL_FOLLOWUP' as const, label: 'Follow-up email', dayOffset: 8, condition: 'IF_NO_REPLY' as const, parentStepId: 'play_s4', requiresApproval: true },
+      { id: 'play_s6', channel: 'NURTURE' as const, label: 'Add to nurture', dayOffset: 12, condition: 'IF_NO_REPLY' as const, parentStepId: 'play_s5', requiresApproval: false },
+    ],
+    guardrails: { approvalRequired: true, maxSendsPerDay: 20, businessHoursOnly: true, stopOnReply: true },
+  };
+  setPlan(jobId, playOutreachPlan);
+
+  // Dynamically create an outreach plan evidence for this play's leads
+  const outreachEvidenceId = 'ev_prioritize_outreach_plan';
+  setEv(outreachEvidenceId, {
+    id: outreachEvidenceId,
+    type: 'OUTREACH_PLAN_BUILDER',
+    title: 'Outreach plan \u2014 Prioritized leads',
+    subtitle: `${leadCount} leads \u2022 Signal-driven personalization \u2022 Reason-for-now messaging`,
+    generatedAt: new Date().toISOString(),
+    context: { jobId },
+    leadListId: 'leadlist_west_smb_weekly_01',
+    leadCount,
+  });
+
   setTimeout(() => {
-    addAgentMessage(jobId, "I'll create an outreach campaign for these leads with personalized, signal-driven messaging.", {
-      cardType: 'JOB_PROPOSAL',
-      cardData: {
-        jobName: 'Outreach campaign \u2014 Prioritized leads',
-        jobType: 'DRAFT_OUTREACH',
-        inputsSummary: ['25 leads from prioritization flow', 'Signal-driven personalization', 'Tone: concise, reason-for-now'],
-        outputsExpected: ['Personalized drafts per lead', 'Signal-based hooks', 'Approval queue before sending'],
-        approvalsNeeded: true,
-      },
-    });
+    addAgentMessage(
+      jobId,
+      `Moving to the next phase. I've built an **outreach plan** for your **${leadCount} leads** using the signals we identified \u2014 leadership changes, engagement, and intent data.\n\nReview the plan and adjust the sequence, tone, or channel mix before I draft the messages.`
+    );
+    setEvidence(outreachEvidenceId);
     updateJobSuggestions(jobId,
-      [{ id: 'ns_run_outreach', title: 'Run the outreach campaign', why: 'Draft personalized messages for 25 leads', cta: 'Run', prompt: 'Yes\u2014run it.' }],
+      [
+        { id: 'ns_approve_plan', title: 'Looks good \u2014 draft the messages', why: `Generate personalized outreach for ${leadCount} leads`, cta: 'Run', prompt: 'Looks good, draft the messages' },
+      ],
+      [
+        { id: 'as_lead_email', question: 'Lead with email on Day 1 instead of a connection request?', why: 'Swap the opening channel for a warmer intro' },
+        { id: 'as_skip_inmail', question: 'Drop the InMail step and go straight to follow-up email?', why: 'Simplify the sequence to fewer touchpoints' },
+      ]
+    );
+  }, 800);
+}
+
+// ── Sequence manipulation helpers ────────────────────────────────────────
+
+function flowSequenceSwapToEmail(jobId: string) {
+  const { setPlan, outreachPlansById } = useOutreachStore.getState();
+  const plan = outreachPlansById[jobId];
+
+  if (plan) {
+    // Swap: Email on Day 0, Connection request on Day 2
+    const updatedSteps = plan.steps.map((s) => {
+      if (s.id === 'play_s1') return { ...s, channel: 'EMAIL' as const, label: 'Email (reason-for-now)', addToCadence: true };
+      if (s.id === 'play_s2') return { ...s, channel: 'CONNECT_REQUEST' as const, label: 'Connection request', dayOffset: 2, condition: 'IF_NO_REPLY' as const, parentStepId: 'play_s1' };
+      if (s.id === 'play_s3') return { ...s, channel: 'EMAIL_FOLLOWUP' as const, label: 'Follow-up email', dayOffset: 4, condition: 'IF_NO_REPLY' as const, parentStepId: 'play_s2' };
+      if (s.id === 'play_s4') return { ...s, dayOffset: 6, parentStepId: 'play_s3' };
+      if (s.id === 'play_s5') return { ...s, dayOffset: 9, parentStepId: 'play_s4' };
+      if (s.id === 'play_s6') return { ...s, dayOffset: 12, parentStepId: 'play_s5' };
+      return s;
+    });
+    setPlan(jobId, { ...plan, steps: updatedSteps });
+  }
+
+  setTimeout(() => {
+    addAgentMessage(
+      jobId,
+      "Done \u2014 swapped to **email-first**. The sequence now opens with a reason-for-now email on Day 0, then falls back to a connection request if there\u2019s no reply.\n\nTake a look at the updated sequence on the right."
+    );
+    setEvidence('ev_prioritize_outreach_plan');
+    updateJobSuggestions(jobId,
+      [
+        { id: 'ns_approve_plan', title: 'Looks good \u2014 draft the messages', why: 'Generate personalized outreach', cta: 'Run', prompt: 'Looks good, draft the messages' },
+      ],
+      [
+        { id: 'as_revert_li', question: 'Go back to leading with a connection request?', why: 'Revert to LinkedIn-first sequence' },
+        { id: 'as_add_phone', question: 'Add a phone step after the follow-up email?', why: 'Multi-channel with a phone touchpoint' },
+      ]
+    );
+  }, 600);
+}
+
+function flowSequenceDropInmail(jobId: string) {
+  const { setPlan, outreachPlansById } = useOutreachStore.getState();
+  const plan = outreachPlansById[jobId];
+
+  if (plan) {
+    // Remove InMail step and reconnect the chain
+    const inmailStep = plan.steps.find(s => s.id === 'play_s4');
+    if (inmailStep) {
+      // Point children of InMail to its parent
+      const updatedSteps = plan.steps
+        .filter(s => s.id !== 'play_s4')
+        .map(s => {
+          if (s.parentStepId === 'play_s4') return { ...s, parentStepId: inmailStep.parentStepId || null };
+          return s;
+        });
+      setPlan(jobId, { ...plan, steps: updatedSteps });
+    }
+  }
+
+  setTimeout(() => {
+    addAgentMessage(
+      jobId,
+      "Done \u2014 removed the InMail step. The sequence now goes straight from email to follow-up. This keeps it tighter and saves your InMail credits.\n\nReview the updated sequence on the right."
+    );
+    setEvidence('ev_prioritize_outreach_plan');
+    updateJobSuggestions(jobId,
+      [
+        { id: 'ns_approve_plan', title: 'Looks good \u2014 draft the messages', why: 'Generate personalized outreach', cta: 'Run', prompt: 'Looks good, draft the messages' },
+      ],
+      [
+        { id: 'as_add_inmail_back', question: 'Actually, add InMail back in?', why: 'Re-add the InMail step' },
+        { id: 'as_shorten_wait', question: 'Shorten the wait between steps to 1 day?', why: 'Speed up the cadence' },
+      ]
+    );
+  }, 600);
+}
+
+function flowSequenceAddInmailBack(jobId: string) {
+  const { setPlan, outreachPlansById } = useOutreachStore.getState();
+  const plan = outreachPlansById[jobId];
+
+  if (plan) {
+    const hasInmail = plan.steps.some(s => s.channel === 'INMAIL');
+    if (!hasInmail) {
+      // Find the email / follow-up step to insert after
+      const emailStep = plan.steps.find(s => s.id === 'play_s3') || plan.steps.find(s => s.channel === 'EMAIL' || s.channel === 'EMAIL_FOLLOWUP');
+      const parentId = emailStep?.id || plan.steps[plan.steps.length - 1]?.id || null;
+      const parentDay = emailStep?.dayOffset ?? 3;
+
+      // Re-add InMail and shift later steps
+      const inmailStep = {
+        id: 'play_s4',
+        channel: 'INMAIL' as const,
+        label: 'InMail',
+        dayOffset: parentDay + 2,
+        condition: 'IF_NO_REPLY' as const,
+        parentStepId: parentId,
+        requiresApproval: true,
+      };
+
+      // Reconnect children: steps that pointed to the email step now point to InMail
+      const updatedSteps = plan.steps.map(s => {
+        if (s.parentStepId === parentId && s.id !== 'play_s4' && s.dayOffset > parentDay) {
+          return { ...s, parentStepId: 'play_s4' };
+        }
+        return s;
+      });
+
+      setPlan(jobId, { ...plan, steps: [...updatedSteps, inmailStep] });
+    }
+  }
+
+  setTimeout(() => {
+    addAgentMessage(
+      jobId,
+      "Added InMail back into the sequence. It\u2019ll fire if there\u2019s no reply to the email."
+    );
+    setEvidence('ev_prioritize_outreach_plan');
+    updateJobSuggestions(jobId,
+      [
+        { id: 'ns_approve_plan', title: 'Looks good \u2014 draft the messages', why: 'Generate personalized outreach', cta: 'Run', prompt: 'Looks good, draft the messages' },
+      ],
+      [
+        { id: 'as_skip_inmail', question: 'Drop the InMail step and go straight to follow-up email?', why: 'Simplify the sequence' },
+        { id: 'as_shorten_wait', question: 'Shorten the wait between steps to 1 day?', why: 'Speed up the cadence' },
+      ]
+    );
+  }, 500);
+}
+
+function flowSequenceRevertToLinkedIn(jobId: string) {
+  const { setPlan, outreachPlansById } = useOutreachStore.getState();
+  const plan = outreachPlansById[jobId];
+
+  if (plan) {
+    // Reset to the default LinkedIn-first sequence
+    const defaultSteps = [
+      { id: 'play_s1', channel: 'CONNECT_REQUEST' as const, label: 'Connection request', dayOffset: 0, condition: null, parentStepId: null, requiresApproval: true },
+      { id: 'play_s2', channel: 'LINKEDIN_MESSAGE' as const, label: 'LinkedIn message', dayOffset: 2, condition: 'IF_CONNECT_ACCEPTED' as const, parentStepId: 'play_s1', requiresApproval: true },
+      { id: 'play_s3', channel: 'EMAIL' as const, label: 'Email (reason-for-now)', dayOffset: 3, condition: 'IF_NOT_ACCEPTED' as const, parentStepId: 'play_s1', requiresApproval: true, addToCadence: true },
+      { id: 'play_s4', channel: 'INMAIL' as const, label: 'InMail', dayOffset: 5, condition: 'IF_NO_REPLY' as const, parentStepId: 'play_s3', requiresApproval: true },
+      { id: 'play_s5', channel: 'EMAIL_FOLLOWUP' as const, label: 'Follow-up email', dayOffset: 8, condition: 'IF_NO_REPLY' as const, parentStepId: 'play_s4', requiresApproval: true },
+      { id: 'play_s6', channel: 'NURTURE' as const, label: 'Add to nurture', dayOffset: 12, condition: 'IF_NO_REPLY' as const, parentStepId: 'play_s5', requiresApproval: false },
+    ];
+    setPlan(jobId, { ...plan, steps: defaultSteps });
+  }
+
+  setTimeout(() => {
+    addAgentMessage(
+      jobId,
+      "Reverted to LinkedIn-first. Connection request on Day 0, then branching from there."
+    );
+    setEvidence('ev_prioritize_outreach_plan');
+    updateJobSuggestions(jobId,
+      [
+        { id: 'ns_approve_plan', title: 'Looks good \u2014 draft the messages', why: 'Generate personalized outreach', cta: 'Run', prompt: 'Looks good, draft the messages' },
+      ],
+      [
+        { id: 'as_lead_email', question: 'Lead with email on Day 1 instead of a connection request?', why: 'Swap the opening channel' },
+        { id: 'as_skip_inmail', question: 'Drop the InMail step and go straight to follow-up email?', why: 'Simplify the sequence' },
+      ]
+    );
+  }, 500);
+}
+
+function flowSequenceShortenWait(jobId: string) {
+  const { setPlan, outreachPlansById } = useOutreachStore.getState();
+  const plan = outreachPlansById[jobId];
+
+  if (plan) {
+    // Compress all steps to 1-day gaps
+    let day = 0;
+    const updatedSteps = plan.steps.map((s, i) => {
+      if (i === 0) return { ...s, dayOffset: 0 };
+      day += 1;
+      return { ...s, dayOffset: day };
+    });
+    setPlan(jobId, { ...plan, steps: updatedSteps });
+  }
+
+  setTimeout(() => {
+    addAgentMessage(
+      jobId,
+      "Tightened the cadence \u2014 each step is now 1 day apart. This is more aggressive but gets through the sequence faster."
+    );
+    setEvidence('ev_prioritize_outreach_plan');
+    updateJobSuggestions(jobId,
+      [
+        { id: 'ns_approve_plan', title: 'Looks good \u2014 draft the messages', why: 'Generate personalized outreach', cta: 'Run', prompt: 'Looks good, draft the messages' },
+      ],
+      [
+        { id: 'as_spread_out', question: 'Space them out more \u2014 2 days between steps?', why: 'Less aggressive cadence' },
+        { id: 'as_skip_inmail', question: 'Drop the InMail step?', why: 'Simplify the sequence' },
+      ]
+    );
+  }, 500);
+}
+
+function flowPlayApproveAndSchedule(jobId: string) {
+  const { setJobStatus } = useJobStore.getState();
+  const { approveAllDrafts } = useOutreachStore.getState();
+  const { goHome, setCurrentEvidence: setCurrentEv } = useAppStore.getState();
+
+  // Approve all drafts in the store
+  approveAllDrafts();
+
+  // Determine dynamic draft count
+  const draftCount = Object.keys(useOutreachStore.getState().draftsById).length || 24;
+
+  setTimeout(() => {
+    addAgentMessage(
+      jobId,
+      `All **${draftCount} drafts** approved and outreach scheduled! I\u2019ll send up to 20 messages per day during business hours, stopping on any reply.\n\nI\u2019ll notify you when leads respond or if anything needs your attention.`
+    );
+    updateJobSuggestions(jobId, [], []);
+  }, 600);
+
+  setTimeout(() => {
+    // Transition play to SCHEDULED
+    setJobStatus(jobId, 'SCHEDULED');
+    const { jobsById } = useJobStore.getState();
+    const playJob = jobsById[jobId];
+    if (playJob) {
+      useJobStore.setState((s) => ({
+        jobsById: {
+          ...s.jobsById,
+          [jobId]: {
+            ...playJob,
+            status: 'SCHEDULED' as const,
+            schedule: {
+              is_active: true,
+              frequency: 'weekly' as const,
+              dayOfWeek: 'Monday',
+              time: '09:00',
+              next_run_at: '2026-02-17T09:00:00-08:00',
+            },
+          },
+        },
+      }));
+    }
+
+    // Navigate to home — don't show execution monitor
+    goHome();
+    setCurrentEv('ev_home');
+  }, 2000);
+}
+
+function flowPlayDraftMessages(jobId: string) {
+  const { setEvidence: setEv } = useEvidenceStore.getState();
+  const { setLeads, setDrafts } = useOutreachStore.getState();
+
+  // Check for quick play card config
+  const job = useJobStore.getState().jobsById[jobId];
+  const intentKey = job?.scope?.intentKey || '';
+  const cardConfig = CARD_CONFIG[intentKey];
+
+  // Determine the current filtered lead count
+  const quickFilteredLeadsEv = useEvidenceStore.getState().evidenceById['ev_quick_leads_filtered'];
+  const filteredLeadsEv = useEvidenceStore.getState().evidenceById['ev_play_leads_filtered'];
+  const cardLeadsEv = cardConfig ? useEvidenceStore.getState().evidenceById[cardConfig.leadsEvId] : null;
+  const baseLeadsEv = useEvidenceStore.getState().evidenceById['ev_leads_discovery'];
+  const leadsEvidence = (cardConfig ? quickFilteredLeadsEv : filteredLeadsEv) || cardLeadsEv || baseLeadsEv;
+  let leadCount = 25;
+  if (leadsEvidence?.leadsDiscovery) {
+    let visible = leadsEvidence.leadsDiscovery;
+    for (const f of (leadsEvidence.appliedFilters || [])) {
+      visible = visible.filter((l: { filterTags: string[] }) => l.filterTags.includes(f));
+    }
+    leadCount = visible.length;
+  }
+
+  // Populate the outreach store with seed data so drafts render
+  setLeads(seedOutreachLeads);
+  setDrafts(seedOutreachDrafts);
+
+  // Create a draft review evidence for the play's leads
+  const draftsEvidenceId = 'ev_prioritize_outreach_drafts';
+  setEv(draftsEvidenceId, {
+    id: draftsEvidenceId,
+    type: 'OUTREACH_DRAFT_REVIEW',
+    title: 'Draft messages — Prioritized leads',
+    subtitle: `${leadCount} leads \u2022 Personalized per lead \u2022 Signal-driven hooks`,
+    generatedAt: new Date().toISOString(),
+    context: { jobId },
+    outreachDrafts: seedOutreachDrafts,
+  });
+
+  setTimeout(() => {
+    addAgentMessage(
+      jobId,
+      `I've drafted personalized messages for your **${leadCount} leads** across 4 steps: connection request, LinkedIn message, email, and InMail. Each message uses the signals we identified \u2014 leadership changes, engagement patterns, and intent data.\n\nReview and edit any message before sending.`
+    );
+    setEvidence(draftsEvidenceId);
+    updateJobSuggestions(jobId,
+      [
+        { id: 'ns_approve_all', title: 'Approve all drafts', why: 'Messages look good \u2014 queue them for sending', cta: 'Approve', prompt: 'Approve all drafts' },
+      ],
+      [
+        { id: 'as_tone_direct', question: 'Make the tone more direct', why: 'Shorter, punchier messaging' },
+        { id: 'as_add_personal', question: 'Add more personalization', why: 'Reference specific company signals' },
+      ]
+    );
+  }, 800);
+}
+
+// ═══════════════════════════════════════════════════════
+// PLAY WORKSPACE FLOWS (play_001 deterministic refinements)
+// ═══════════════════════════════════════════════════════
+
+/** Leadership change detail data per account */
+const LEADERSHIP_CHANGE_DETAILS: Record<string, string> = {
+  acc_11: 'New CRO from Salesforce (12 days ago)',
+  acc_01: 'VP Finance joined from Snowflake (23 days ago)',
+  acc_02: 'VP Revenue Ops hired (18 days ago)',
+  acc_03: 'CIO promoted to President, Digital (31 days ago)',
+  acc_12: 'VP Sales Ops hired (21 days ago)',
+  acc_05: 'New CRO joined (45 days ago)',
+  acc_07: 'Finance Director promoted to VP (38 days ago)',
+  acc_06: 'VP Marketing Ops joined (52 days ago)',
+  acc_08: 'VP Sales Ops joined (28 days ago)',
+  acc_09: 'VP Sales joined (15 days ago)',
+  acc_16: 'VP RevOps promoted (41 days ago)',
+  acc_10: 'VP promoted internally (55 days ago)',
+};
+
+/** Last touched dates (some recent, some old) */
+const LAST_TOUCHED: Record<string, { daysAgo: number; display: string }> = {
+  acc_11: { daysAgo: 5, display: '5 days ago' },
+  acc_01: { daysAgo: 42, display: '42 days ago' },
+  acc_02: { daysAgo: 67, display: '67 days ago' },
+  acc_03: { daysAgo: 91, display: '91 days ago' },
+  acc_12: { daysAgo: 33, display: '33 days ago' },
+  acc_05: { daysAgo: 14, display: '14 days ago' },
+  acc_07: { daysAgo: 120, display: '120 days ago' },
+  acc_06: { daysAgo: 8, display: '8 days ago' },
+  acc_08: { daysAgo: 55, display: '55 days ago' },
+  acc_09: { daysAgo: 38, display: '38 days ago' },
+  acc_16: { daysAgo: 78, display: '78 days ago' },
+  acc_10: { daysAgo: 22, display: '22 days ago' },
+};
+
+function flowPlayLeadershipFilter(jobId: string) {
+  const { setEvidence: setEv } = useEvidenceStore.getState();
+  const baseEvidence = useEvidenceStore.getState().evidenceById['ev_prioritize_accounts'];
+
+  if (baseEvidence && baseEvidence.accountsPrioritized) {
+    // Add leadership change details to ALL accounts (so data persists when breadcrumb filter is removed)
+    const allAccountsWithExtra = baseEvidence.accountsPrioritized.map((a) => ({
+      ...a,
+      extraData: {
+        ...(a.extraData || {}),
+        ...(LEADERSHIP_CHANGE_DETAILS[a.id] ? { leadership_change: LEADERSHIP_CHANGE_DETAILS[a.id] } : {}),
+      },
+    }));
+
+    const matchCount = allAccountsWithExtra.filter(
+      (a) => a.signalType === 'leadership' || a.filterTags.includes('leadership-change')
+    ).length;
+
+    setEv('ev_play_accounts_leadership', {
+      id: 'ev_play_accounts_leadership',
+      type: 'ACCOUNTS_PRIORITIZED',
+      title: 'Accounts with leadership changes \u2014 past 60 days',
+      subtitle: `${matchCount} accounts with recent executive moves`,
+      generatedAt: new Date().toISOString(),
+      filterChips: baseEvidence.filterChips || [],
+      accountsPrioritized: allAccountsWithExtra,
+      bookSize: baseEvidence.bookSize,
+      appliedFilters: ['leadership-change'],
+      findLeadsLabel: 'Look for leads from these accounts',
+      extraColumns: [
+        { id: 'leadership_change', label: 'Leadership Change', width: '260px' },
+      ],
+    });
+  }
+
+  setTimeout(() => {
+    addAgentMessage(
+      jobId,
+      'Filtered. **12 accounts** had leadership changes in the past 60 days \u2014 new VPs, CROs, and promoted executives. I\'ve added a **Leadership Change** column so you can see exactly what happened at each.\n\nWant to narrow further?'
+    );
+    setEvidence('ev_play_accounts_leadership');
+    updateJobSuggestions(jobId,
+      [
+        { id: 'ns_untouched_30', title: 'Only show me accounts that I haven\'t touched in 30 days', why: 'Focus on accounts you haven\'t contacted recently', cta: 'Filter', prompt: 'Only show me accounts that I haven\'t touched in 30 days' },
+      ],
+      [
+        { id: 'as_find_leads_now', question: 'Look for leads from these accounts', why: '12 accounts with leadership changes \u2014 find decision makers' },
+      ]
+    );
+  }, 800);
+}
+
+function flowPlayNotTouched30Filter(jobId: string) {
+  const { setEvidence: setEv } = useEvidenceStore.getState();
+  // Always build from the original base evidence so we have ALL accounts
+  const baseEvidence = useEvidenceStore.getState().evidenceById['ev_prioritize_accounts'];
+  const leadershipEvidence = useEvidenceStore.getState().evidenceById['ev_play_accounts_leadership'];
+
+  if (baseEvidence && baseEvidence.accountsPrioritized) {
+    // Add Last Touched + Leadership Change extra data to ALL accounts
+    const allAccountsWithExtra = baseEvidence.accountsPrioritized.map((a) => ({
+      ...a,
+      extraData: {
+        ...(a.extraData || {}),
+        ...(LEADERSHIP_CHANGE_DETAILS[a.id] ? { leadership_change: LEADERSHIP_CHANGE_DETAILS[a.id] } : {}),
+        last_touched: LAST_TOUCHED[a.id]?.display || 'Never',
+      },
+    }));
+
+    // Merge extra columns from leadership step + add Last Touched
+    const leadershipCols = leadershipEvidence?.extraColumns || [];
+    const hasLastTouched = leadershipCols.some((c) => c.id === 'last_touched');
+    const extraColumns = hasLastTouched
+      ? leadershipCols
+      : [...leadershipCols, { id: 'last_touched', label: 'Last Touched', width: '140px' }];
+
+    // Stack filters: leadership-change + not-touched-30d
+    const prevFilters = leadershipEvidence?.appliedFilters || ['leadership-change'];
+    const appliedFilters = prevFilters.includes('not-touched-30d')
+      ? prevFilters
+      : [...prevFilters, 'not-touched-30d'];
+
+    setEv('ev_play_accounts_untouched', {
+      id: 'ev_play_accounts_untouched',
+      type: 'ACCOUNTS_PRIORITIZED',
+      title: 'Untouched accounts with leadership changes',
+      subtitle: `Accounts not contacted in 30+ days with recent executive moves`,
+      generatedAt: new Date().toISOString(),
+      filterChips: baseEvidence.filterChips || [],
+      accountsPrioritized: allAccountsWithExtra,
+      bookSize: baseEvidence.bookSize,
+      appliedFilters,
+      findLeadsLabel: 'Look for leads from these accounts',
+      extraColumns,
+    });
+  }
+
+  setTimeout(() => {
+    addAgentMessage(
+      jobId,
+      'Narrowed to **8 accounts** you haven\'t touched in 30+ days \u2014 all with recent leadership changes. Added a **Last Touched** column. These are your best timing plays.\n\nReady to find leads in these accounts?'
+    );
+    setEvidence('ev_play_accounts_untouched');
+    updateJobSuggestions(jobId,
+      [
+        { id: 'ns_find_leads_play', title: 'Look for leads from these accounts', why: '8 untouched accounts with leadership changes \u2014 best timing', cta: 'Find', prompt: 'Look for leads from these accounts' },
+      ],
       []
     );
   }, 800);
+}
+
+function flowPlayFindLeads(jobId: string) {
+  // Check if this is a quick play with card-specific evidence
+  const job = useJobStore.getState().jobsById[jobId];
+  const intentKey = job?.scope?.intentKey || '';
+  const cardConfig = CARD_CONFIG[intentKey];
+
+  // Get whatever filtered account list is currently showing
+  const cardAccountsEv = cardConfig ? useEvidenceStore.getState().evidenceById[cardConfig.accountsEvId] : null;
+  const untouched = useEvidenceStore.getState().evidenceById['ev_play_accounts_untouched'];
+  const leadership = useEvidenceStore.getState().evidenceById['ev_play_accounts_leadership'];
+  const base = useEvidenceStore.getState().evidenceById['ev_prioritize_accounts'];
+  const currentEvidence = cardAccountsEv || untouched || leadership || base;
+
+  // Calculate visible count after appliedFilters (mirrors breadcrumb logic)
+  let visibleAccounts = currentEvidence?.accountsPrioritized || [];
+  const filters = currentEvidence?.appliedFilters || [];
+  for (const f of filters) {
+    visibleAccounts = visibleAccounts.filter(
+      (a) => a.filterTags.includes(f) || a.signalType === f
+    );
+  }
+  const accountCount = visibleAccounts.length || 8;
+
+  // Determine which leads evidence to auto-advance to
+  const leadsAutoAdvanceId = cardConfig?.leadsEvId || 'ev_leads_discovery';
+  const leadsReasoningId = cardConfig ? cardConfig.leadsReasoningEvId : 'ev_play_leads_reasoning';
+
+  // Create a play-specific reasoning animation that auto-advances to leads_discovery
+  const { setEvidence: setEv } = useEvidenceStore.getState();
+  setEv(leadsReasoningId, {
+    id: leadsReasoningId,
+    type: 'REASONING_ANIMATION',
+    title: 'Finding leads in prioritized accounts',
+    subtitle: `Scanning ${accountCount} accounts for decision makers`,
+    generatedAt: new Date().toISOString(),
+    reasoningSteps: [
+      { label: 'Scanning prioritized accounts', duration: 1500, icon: 'search' },
+      { label: 'Identifying key decision makers', duration: 1500, icon: 'users' },
+      { label: 'Analyzing engagement signals', duration: 1500, icon: 'chart' },
+    ],
+    reasoningAutoAdvanceEvidenceId: leadsAutoAdvanceId,
+  });
+
+  setTimeout(() => {
+    addAgentMessage(
+      jobId,
+      `Starting lead discovery across **${accountCount} accounts**. Scanning for decision makers, engagement signals, and warm paths...`
+    );
+    setEvidence(leadsReasoningId);
+    // Clear suggestions during reasoning
+    updateJobSuggestions(jobId, [], []);
+  }, 600);
+
+  // After reasoning animation completes, send results message and update suggestions
+  setTimeout(() => {
+    // For quick play cards with lead pre-filters, count reflects the pre-filtered set
+    const leadsEvData = useEvidenceStore.getState().evidenceById[leadsAutoAdvanceId];
+    const preLeadFilters = leadsEvData?.appliedFilters || [];
+    const leadsCount = countVisibleLeads(leadsAutoAdvanceId) || 40;
+
+    // Build a contextual description based on what's pre-filtered
+    const hasFnSales = preLeadFilters.includes('fn-sales');
+    const leadDescriptor = hasFnSales
+      ? 'Sales leaders and decision makers'
+      : 'Finance stakeholders, RevOps leaders, and key decision makers';
+
+    addAgentMessage(
+      jobId,
+      `Found **${leadsCount} ${hasFnSales ? 'Sales leads' : 'leads'}** across your ${accountCount} accounts — ${leadDescriptor}.\n\nYou can refine the list from here, or proceed to outreach planning.`
+    );
+
+    // For quick play, use discovery questions; for regular play, use existing suggestions
+    if (cardConfig) {
+      const nextQ = getNextLeadDiscoveryQuestion(preLeadFilters, intentKey);
+      if (nextQ) {
+        updateJobSuggestions(jobId,
+          nextQ.suggestions.map(s => ({ ...s, why: `Narrow by ${nextQ.dimension}` })),
+          [
+            { id: 'as_proceed', question: 'Looks good — let\'s proceed', why: `Move to outreach planning with these ${leadsCount} leads` },
+          ]
+        );
+      } else {
+        updateJobSuggestions(jobId,
+          [
+            { id: 'ns_filter_job_changes', title: 'Prioritize job changes', why: 'Job changes create the best timing for outreach', cta: 'Filter', prompt: 'Apply those filters — prioritize job changes' },
+            { id: 'ns_outreach', title: 'Start outreach campaign', why: `Personalized messaging for ${leadsCount} leads`, cta: 'Run', prompt: 'Start outreach campaign for these leads' },
+          ],
+          [
+            { id: 'as_proceed', question: 'Looks good — let\'s proceed', why: `Move to outreach planning with these ${leadsCount} leads` },
+          ]
+        );
+      }
+    } else {
+      updateJobSuggestions(jobId,
+        [
+          { id: 'ns_filter_job_changes', title: 'Apply those filters — prioritize job changes', why: 'Job changes create the best timing for outreach', cta: 'Filter', prompt: 'Apply those filters — prioritize job changes' },
+          { id: 'ns_vp_plus', title: 'VP level and above only', why: 'Focus on senior decision makers', cta: 'Filter', prompt: 'VP level and above only' },
+        ],
+        [
+          { id: 'as_proceed', question: 'Looks good — let\'s proceed', why: `Move to outreach planning with these ${leadsCount} leads` },
+        ]
+      );
+    }
+  }, 5500);
+}
+
+// ═══════════════════════════════════════════════════════
+// QUICK PLAY: Guided Discovery Flow
+// ═══════════════════════════════════════════════════════
+
+/** Card configuration for discovery flow */
+interface CardConfig {
+  reasoningEvId: string;
+  accountsEvId: string;
+  leadsReasoningEvId: string;
+  leadsEvId: string;
+  preFilters: string[];       // Pre-applied account-level filters
+  leadPreFilters: string[];   // Pre-known lead-level dimensions (function/seniority)
+  openingMessage: string;
+  playTitle: string;
+}
+
+const CARD_CONFIG: Record<string, CardConfig> = {
+  ai_growth_bay: {
+    reasoningEvId: 'ev_quick_ai_growth_reasoning',
+    accountsEvId: 'ev_quick_ai_growth_accounts',
+    leadsReasoningEvId: 'ev_quick_ai_growth_leads_reasoning',
+    leadsEvId: 'ev_quick_ai_growth_leads',
+    preFilters: ['region-bay-area', 'industry-ai'],
+    leadPreFilters: ['fn-sales'],   // Card implies "Sales leaders"
+    openingMessage: "I found **{count} AI companies** in the Bay Area with active buying signals. They're ranked by composite score on the right.\n\nLet's narrow this down — what size companies are you targeting?",
+    playTitle: 'AI growth — Bay Area',
+  },
+  midsize_software_na: {
+    reasoningEvId: 'ev_quick_midsize_sw_reasoning',
+    accountsEvId: 'ev_quick_midsize_sw_accounts',
+    leadsReasoningEvId: 'ev_quick_midsize_sw_leads_reasoning',
+    leadsEvId: 'ev_quick_midsize_sw_leads',
+    preFilters: ['industry-saas'],
+    leadPreFilters: [],   // "Decision makers" — function unknown
+    openingMessage: "I found **{count} software companies** with buying signals. They're ranked by intent on the right.\n\nWhich region should we focus on?",
+    playTitle: 'Mid-size software — NA',
+  },
+  growing_sales_teams: {
+    reasoningEvId: 'ev_quick_hiring_gtm_reasoning',
+    accountsEvId: 'ev_quick_hiring_gtm_accounts',
+    leadsReasoningEvId: 'ev_quick_hiring_gtm_leads_reasoning',
+    leadsEvId: 'ev_quick_hiring_gtm_leads',
+    preFilters: ['hiring-surge'],
+    leadPreFilters: ['fn-sales'],   // Card implies "GTM/Sales"
+    openingMessage: "I found **{count} companies** actively hiring GTM roles. These are high-intent targets — expanding sales teams often means new tool evaluations.\n\nWhich region should we focus on first?",
+    playTitle: 'Companies hiring GTM',
+  },
+  recent_funding: {
+    reasoningEvId: 'ev_quick_funded_reasoning',
+    accountsEvId: 'ev_quick_funded_accounts',
+    leadsReasoningEvId: 'ev_quick_funded_leads_reasoning',
+    leadsEvId: 'ev_quick_funded_leads',
+    preFilters: ['recent-funding'],
+    leadPreFilters: [],   // "Founders + GTM heads" — function unknown
+    openingMessage: "I found **{count} recently funded companies** (Series A–C). Post-funding is prime time for new tool investments.\n\nWhich region should we focus on?",
+    playTitle: 'Recent funding (A–C)',
+  },
+};
+
+/** Maps dimension prefixes to readable labels */
+const DIMENSION_LABELS: Record<string, string> = {
+  'region-bay-area': 'Bay Area',
+  'region-west': 'West Coast',
+  'region-northeast': 'Northeast',
+  'region-south': 'South',
+  'region-midwest': 'Midwest',
+  'industry-ai': 'AI/ML',
+  'industry-saas': 'SaaS',
+  'industry-fintech': 'FinTech',
+  'industry-healthtech': 'HealthTech',
+  'industry-enterprise-sw': 'Enterprise Software',
+  'industry-cloud': 'Cloud',
+  'size-startup': '1–50 employees',
+  'size-small': '51–200 employees',
+  'size-midsize': '201–500 employees',
+  'size-growth': '501–1,000 employees',
+  'size-enterprise': '1,000+ employees',
+  'fn-sales': 'Sales',
+  'fn-finance': 'Finance',
+  'fn-revops': 'RevOps',
+  'fn-engineering': 'Engineering',
+  'fn-marketing': 'Marketing',
+  'fn-c-suite': 'C-Suite',
+  'seniority-vp-plus': 'VP and above',
+  'seniority-director': 'Director',
+  'seniority-manager': 'Manager',
+  'leadership-change': 'Leadership changes',
+  'recent-funding': 'Recent funding',
+  'hiring-surge': 'Hiring surge',
+  'not-touched-30d': 'Not touched in 30 days',
+};
+
+/** Determine the next discovery question for accounts based on applied filters */
+function getNextAccountDiscoveryQuestion(
+  appliedFilters: string[],
+  intentKey: string
+): { dimension: string; message: string; suggestions: { id: string; title: string; cta: string; prompt: string }[] } | null {
+  const hasRegion = appliedFilters.some(f => f.startsWith('region-'));
+  const hasIndustry = appliedFilters.some(f => f.startsWith('industry-'));
+  const hasSize = appliedFilters.some(f => f.startsWith('size-'));
+
+  // Card-specific skip logic
+  const config = CARD_CONFIG[intentKey];
+  const preHasRegion = config?.preFilters.some(f => f.startsWith('region-')) || false;
+  const preHasIndustry = config?.preFilters.some(f => f.startsWith('industry-')) || false;
+  const preHasSize = config?.preFilters.some(f => f.startsWith('size-')) || false;
+
+  if (!hasRegion && !preHasRegion) {
+    return {
+      dimension: 'region',
+      message: "Which region should we focus on?",
+      suggestions: [
+        { id: 'ns_region_bay', title: 'Bay Area', cta: 'Filter', prompt: 'Focus on Bay Area companies' },
+        { id: 'ns_region_west', title: 'West Coast', cta: 'Filter', prompt: 'Focus on West Coast companies' },
+        { id: 'ns_region_ne', title: 'Northeast', cta: 'Filter', prompt: 'Focus on Northeast companies' },
+        { id: 'ns_region_south', title: 'South', cta: 'Filter', prompt: 'Focus on companies in the South' },
+        { id: 'ns_region_mw', title: 'Midwest', cta: 'Filter', prompt: 'Focus on Midwest companies' },
+      ],
+    };
+  }
+
+  if (!hasIndustry && !preHasIndustry) {
+    return {
+      dimension: 'industry',
+      message: "Any particular industry vertical?",
+      suggestions: [
+        { id: 'ns_ind_ai', title: 'AI/ML', cta: 'Filter', prompt: 'Focus on AI/ML companies' },
+        { id: 'ns_ind_saas', title: 'SaaS', cta: 'Filter', prompt: 'Focus on SaaS companies' },
+        { id: 'ns_ind_fintech', title: 'FinTech', cta: 'Filter', prompt: 'Focus on FinTech companies' },
+        { id: 'ns_ind_health', title: 'HealthTech', cta: 'Filter', prompt: 'Focus on HealthTech companies' },
+        { id: 'ns_ind_entsw', title: 'Enterprise Software', cta: 'Filter', prompt: 'Focus on Enterprise Software companies' },
+      ],
+    };
+  }
+
+  if (!hasSize && !preHasSize) {
+    return {
+      dimension: 'size',
+      message: "What size companies are you targeting?",
+      suggestions: [
+        { id: 'ns_size_startup', title: '1–50 employees', cta: 'Filter', prompt: 'Focus on startups with 1–50 employees' },
+        { id: 'ns_size_small', title: '51–200', cta: 'Filter', prompt: 'Focus on companies with 51–200 employees' },
+        { id: 'ns_size_mid', title: '201–500', cta: 'Filter', prompt: 'Focus on mid-size companies, 201–500 employees' },
+        { id: 'ns_size_growth', title: '501–1,000', cta: 'Filter', prompt: 'Focus on growth-stage companies, 501–1,000 employees' },
+        { id: 'ns_size_enterprise', title: '1,000+', cta: 'Filter', prompt: 'Focus on enterprise companies, 1,000+ employees' },
+      ],
+    };
+  }
+
+  // All dimensions answered → transition to signal filters
+  return null;
+}
+
+/** Determine the next discovery question for leads based on applied filters */
+function getNextLeadDiscoveryQuestion(
+  appliedFilters: string[],
+  intentKey: string
+): { dimension: string; message: string; suggestions: { id: string; title: string; cta: string; prompt: string }[] } | null {
+  const hasFunction = appliedFilters.some(f => f.startsWith('fn-'));
+  const hasSeniority = appliedFilters.some(f => f.startsWith('seniority-'));
+
+  // Card-specific: Card 1 and Card 3 already know function (Sales/GTM) via leadPreFilters
+  const config = CARD_CONFIG[intentKey];
+  const preHasFunction = config?.leadPreFilters.some(f => f.startsWith('fn-')) || false;
+
+  if (!hasFunction && !preHasFunction) {
+    return {
+      dimension: 'function',
+      message: "Which function should we focus on?",
+      suggestions: [
+        { id: 'ns_fn_sales', title: 'Sales', cta: 'Filter', prompt: 'Focus on Sales leaders' },
+        { id: 'ns_fn_finance', title: 'Finance', cta: 'Filter', prompt: 'Focus on Finance leaders' },
+        { id: 'ns_fn_revops', title: 'RevOps', cta: 'Filter', prompt: 'Focus on RevOps leaders' },
+        { id: 'ns_fn_csuite', title: 'C-Suite', cta: 'Filter', prompt: 'Focus on C-Suite executives' },
+        { id: 'ns_fn_eng', title: 'Engineering', cta: 'Filter', prompt: 'Focus on Engineering leaders' },
+      ],
+    };
+  }
+
+  if (!hasSeniority) {
+    return {
+      dimension: 'seniority',
+      message: "What seniority level are you targeting?",
+      suggestions: [
+        { id: 'ns_sen_vp', title: 'VP and above', cta: 'Filter', prompt: 'VP level and above only' },
+        { id: 'ns_sen_dir', title: 'Director+', cta: 'Filter', prompt: 'Director level and above' },
+        { id: 'ns_sen_mgr', title: 'Manager+', cta: 'Filter', prompt: 'Manager level and above' },
+      ],
+    };
+  }
+
+  // All lead dimensions answered
+  return null;
+}
+
+/** Count visible accounts after applying filters */
+function countVisibleAccounts(accountsEvId: string): number {
+  const ev = useEvidenceStore.getState().evidenceById[accountsEvId];
+  if (!ev?.accountsPrioritized) return 0;
+  let visible = ev.accountsPrioritized;
+  for (const f of (ev.appliedFilters || [])) {
+    visible = visible.filter((a: { filterTags: string[]; signalType?: string }) => a.filterTags.includes(f) || a.signalType === f);
+  }
+  return visible.length;
+}
+
+/** Count visible leads after applying filters */
+function countVisibleLeads(leadsEvId: string): number {
+  const ev = useEvidenceStore.getState().evidenceById[leadsEvId];
+  if (!ev?.leadsDiscovery) return 0;
+  let visible = ev.leadsDiscovery;
+  for (const f of (ev.appliedFilters || [])) {
+    visible = visible.filter((l: { filterTags: string[] }) => l.filterTags.includes(f));
+  }
+  return visible.length;
+}
+
+/** Called after reasoning animation to set up the first discovery question */
+function flowQuickPlayStart(jobId: string, intentKey: string) {
+  const config = CARD_CONFIG[intentKey];
+  if (!config) return;
+
+  // Calculate visible account count after pre-filters
+  const count = countVisibleAccounts(config.accountsEvId);
+  const message = config.openingMessage.replace('{count}', String(count));
+
+  // Determine the first discovery question
+  const nextQ = getNextAccountDiscoveryQuestion(config.preFilters, intentKey);
+
+  setTimeout(() => {
+    addAgentMessage(jobId, message);
+    setEvidence(config.accountsEvId);
+
+    if (nextQ) {
+      updateJobSuggestions(jobId,
+        nextQ.suggestions.map(s => ({ ...s, why: `Narrow by ${nextQ.dimension}` })),
+        [
+          { id: 'as_skip_disc', question: 'Skip — show me signals directly', why: 'Jump ahead to signal-based filtering' },
+        ]
+      );
+    } else {
+      // All dimensions covered by pre-filters — go straight to signal suggestions
+      transitionToSignalFilters(jobId, intentKey);
+    }
+  }, 600);
+}
+
+/** Apply a discovery filter to accounts and ask the next question */
+function flowDiscoverAccountDimension(jobId: string, filterTag: string) {
+  const { updateEvidence } = useEvidenceStore.getState();
+  const job = useJobStore.getState().jobsById[jobId];
+  const intentKey = job?.scope?.intentKey || '';
+  const config = CARD_CONFIG[intentKey];
+  if (!config) return;
+
+  const accountsEvId = config.accountsEvId;
+  const ev = useEvidenceStore.getState().evidenceById[accountsEvId];
+  if (!ev) return;
+
+  const prevFilters = ev.appliedFilters || config.preFilters;
+  const appliedFilters = prevFilters.includes(filterTag) ? prevFilters : [...prevFilters, filterTag];
+
+  // Update evidence in place with the new filter
+  updateEvidence(accountsEvId, { appliedFilters });
+
+  // Calculate new visible count
+  let visible = ev.accountsPrioritized || [];
+  for (const f of appliedFilters) {
+    visible = visible.filter((a: { filterTags: string[]; signalType?: string }) => a.filterTags.includes(f) || a.signalType === f);
+  }
+  const visCount = visible.length;
+  const filterLabel = DIMENSION_LABELS[filterTag] || filterTag;
+
+  // Ask the next question
+  const nextQ = getNextAccountDiscoveryQuestion(appliedFilters, intentKey);
+
+  setTimeout(() => {
+    if (nextQ) {
+      addAgentMessage(
+        jobId,
+        `Narrowed to **${visCount} accounts** in ${filterLabel}. ${nextQ.message}`
+      );
+      setEvidence(accountsEvId);
+      updateJobSuggestions(jobId,
+        nextQ.suggestions.map(s => ({ ...s, why: `Narrow by ${nextQ.dimension}` })),
+        [
+          { id: 'as_skip_disc', question: 'Skip — show me signals directly', why: 'Jump ahead to signal-based filtering' },
+        ]
+      );
+    } else {
+      // All discovery dimensions answered → transition to signal filters
+      addAgentMessage(
+        jobId,
+        `Great — **${visCount} accounts** match your criteria. Now let's apply signal-based filters to identify the highest-intent targets.`
+      );
+      setEvidence(accountsEvId);
+      transitionToSignalFilters(jobId, intentKey);
+    }
+  }, 600);
+}
+
+/** After all discovery dimensions are answered, show signal-based filter suggestions */
+function transitionToSignalFilters(jobId: string, intentKey: string) {
+  const config = CARD_CONFIG[intentKey];
+  if (!config) return;
+
+  updateJobSuggestions(jobId,
+    [
+      { id: 'ns_sig_leadership', title: 'Leadership changes in last 60 days', why: 'New executives create timing for outreach', cta: 'Filter', prompt: 'Show me only accounts with leadership changes in the past 60 days' },
+      { id: 'ns_sig_untouched', title: 'Not touched in 30 days', why: 'Focus on accounts you haven\'t contacted recently', cta: 'Filter', prompt: 'Only show me accounts that I haven\'t touched in 30 days' },
+    ],
+    [
+      { id: 'as_find_leads_now', question: 'Skip signals — find leads now', why: 'Go straight to lead discovery' },
+    ]
+  );
+}
+
+/** Apply a discovery filter to leads and ask the next question */
+function flowDiscoverLeadDimension(jobId: string, filterTag: string) {
+  const { setEvidence: setEv, updateEvidence } = useEvidenceStore.getState();
+  const job = useJobStore.getState().jobsById[jobId];
+  const intentKey = job?.scope?.intentKey || '';
+  const config = CARD_CONFIG[intentKey];
+
+  // Find the current leads evidence (card-specific or the filtered one)
+  const quickFilteredEv = useEvidenceStore.getState().evidenceById['ev_quick_leads_filtered'];
+  const filteredLeadsEv = useEvidenceStore.getState().evidenceById['ev_play_leads_filtered'];
+  const cardLeadsEvId = config?.leadsEvId;
+  const cardLeadsEv = cardLeadsEvId ? useEvidenceStore.getState().evidenceById[cardLeadsEvId] : null;
+  const baseLeadsEv = useEvidenceStore.getState().evidenceById['ev_leads_discovery'];
+  const leadsEvidence = (config ? quickFilteredEv : filteredLeadsEv) || cardLeadsEv || baseLeadsEv;
+
+  if (!leadsEvidence?.leadsDiscovery) return;
+
+  const prevFilters = leadsEvidence.appliedFilters || [];
+  const appliedFilters = prevFilters.includes(filterTag) ? prevFilters : [...prevFilters, filterTag];
+
+  // Create or update the filtered leads evidence — keep quick play prefix when applicable
+  const filteredLeadsId = config ? 'ev_quick_leads_filtered' : 'ev_play_leads_filtered';
+  setEv(filteredLeadsId, {
+    id: filteredLeadsId,
+    type: 'LEADS_DISCOVERY',
+    title: `Leads — filtered`,
+    subtitle: `Leads matching your criteria`,
+    generatedAt: new Date().toISOString(),
+    leadsDiscovery: leadsEvidence.leadsDiscovery,
+    totalLeadsCount: leadsEvidence.totalLeadsCount || leadsEvidence.leadsDiscovery.length,
+    filterChips: leadsEvidence.filterChips || [],
+    appliedFilters,
+    outreachLabel: 'Plan Outreach',
+  });
+
+  // Calculate visible
+  let visible = leadsEvidence.leadsDiscovery;
+  for (const f of appliedFilters) {
+    visible = visible.filter((l: { filterTags: string[] }) => l.filterTags.includes(f));
+  }
+  const visCount = visible.length;
+  const filterLabel = DIMENSION_LABELS[filterTag] || filterTag;
+
+  // Next lead discovery question
+  const nextQ = getNextLeadDiscoveryQuestion(appliedFilters, intentKey);
+
+  setTimeout(() => {
+    if (nextQ) {
+      addAgentMessage(
+        jobId,
+        `Filtered to **${visCount} leads** — ${filterLabel}. ${nextQ.message}`
+      );
+      setEvidence(filteredLeadsId);
+      updateJobSuggestions(jobId,
+        nextQ.suggestions.map(s => ({ ...s, why: `Narrow by ${nextQ.dimension}` })),
+        [
+          { id: 'as_skip_lead_disc', question: 'Skip — proceed to outreach', why: 'Move to outreach planning' },
+        ]
+      );
+    } else {
+      // All lead dimensions answered → show signal filters for leads, then outreach
+      addAgentMessage(
+        jobId,
+        `✅ **${visCount} leads** match your criteria.\n\nWhat would you like to do next?`
+      );
+      setEvidence(filteredLeadsId);
+      updateJobSuggestions(jobId,
+        [
+          { id: 'ns_filter_job_changes', title: 'Prioritize job changes', why: 'Job changes create the best timing for outreach', cta: 'Filter', prompt: 'Apply those filters — prioritize job changes' },
+          { id: 'ns_outreach', title: 'Start outreach campaign', why: `Personalized messaging for ${visCount} leads`, cta: 'Run', prompt: 'Start outreach campaign for these leads' },
+        ],
+        [
+          { id: 'as_proceed', question: 'Looks good — let\'s proceed', why: 'Move to outreach planning' },
+        ]
+      );
+    }
+  }, 600);
 }
 
 // ═══════════════════════════════════════════════════════

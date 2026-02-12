@@ -2,6 +2,7 @@ export interface Scope {
   territory?: string;
   segment?: string;
   timeWindowDays?: number;
+  intentKey?: string;
 }
 
 export interface Attachment {
@@ -24,13 +25,13 @@ export type JobType =
   | 'CONVERSATION';
 
 export type JobStatus =
-  | 'NEEDS_INPUT'
-  | 'QUEUED'
-  | 'RUNNING'
-  | 'READY_TO_REVIEW'
-  | 'COMPLETED'
-  | 'BLOCKED'
-  | 'CANCELLED';
+  | 'NEW'              // Created but no action taken
+  | 'QUEUED'           // Approved by user to run, queued by system
+  | 'SCHEDULED'        // Scheduled to run at a different time
+  | 'NEEDS_INPUT'      // User input required (can happen at multiple steps)
+  | 'RUNNING'          // Currently running
+  | 'READY_TO_REVIEW'  // Completed all steps, outputs ready for review
+  | 'ARCHIVED';        // Archived / done
 
 export type JobKind = 'tracked' | 'ephemeral';
 
@@ -50,8 +51,9 @@ export type EvidenceType =
   | 'EXECUTION_MONITOR'
   | 'REASONING_ANIMATION'
   | 'ACCOUNTS_PRIORITIZED'
-  | 'LEADS_DISCOVERY';
+  | 'LEADS_DISCOVERY'
+  | 'SCHEDULE_AND_RUN';
 
-export type SelectedView = 'HOME' | 'JOB';
+export type SelectedView = 'HOME' | 'JOB' | 'ONBOARDING';
 
 export type DraftStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'EDITED' | 'SENT' | 'QUEUED_EXEC';

@@ -52,24 +52,24 @@ export default function JobTileComponent({ tile }: Props) {
         <span className="flex-1 truncate font-body text-ds-base font-semibold text-li-text-primary leading-snug">
           {tile.title}
         </span>
-        <span className="shrink-0 rounded-[4px] bg-li-bg-tertiary px-[8px] py-[2px] font-body text-[11px] font-medium text-li-text-secondary">
+        <span className="shrink-0 rounded-[4px] bg-li-bg-tertiary px-[8px] py-[2px] font-body text-ds-small font-semibold text-li-text-secondary">
           {statusText}
         </span>
       </div>
 
       {/* Row 2: Meta line */}
       <div className="flex flex-wrap items-center gap-[6px]">
-        <span className="rounded-[4px] bg-li-bg-tertiary px-[6px] py-[1px] font-body text-[11px] text-li-text-secondary">
+        <span className="rounded-[4px] bg-li-bg-tertiary px-[6px] py-[1px] font-body text-ds-small text-li-text-secondary">
           {tile.jobTypeLabel}
         </span>
         {tile.scopeLabel && (
           <>
-            <span className="font-body text-[11px] text-li-text-tertiary">&middot;</span>
-            <span className="font-body text-[11px] text-li-text-tertiary">{tile.scopeLabel}</span>
+            <span className="font-body text-ds-small text-li-text-tertiary">&middot;</span>
+            <span className="font-body text-ds-small text-li-text-tertiary">{tile.scopeLabel}</span>
           </>
         )}
-        <span className="font-body text-[11px] text-li-text-tertiary">&middot;</span>
-        <span className="font-body text-[11px] text-li-text-tertiary">Updated {tile.updated}</span>
+        <span className="font-body text-ds-small text-li-text-tertiary">&middot;</span>
+        <span className="font-body text-ds-small text-li-text-tertiary">Updated {tile.updated}</span>
       </div>
 
       {/* Row 3: Preview + CTA inline */}
@@ -78,7 +78,7 @@ export default function JobTileComponent({ tile }: Props) {
           {facepileItems.length > 0 && <Facepile items={facepileItems} max={4} size="sm" />}
           {logopileItems.length > 0 && <LogoPile items={logopileItems} max={4} size="sm" />}
           {overflow > 0 && (
-            <span className="font-body text-[11px] text-li-text-tertiary">+{overflow}</span>
+            <span className="font-body text-ds-small text-li-text-tertiary">+{overflow}</span>
           )}
         </div>
         <button

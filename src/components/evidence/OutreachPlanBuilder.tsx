@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useOutreachStore } from '../../store/useOutreachStore';
 import { useJobStore } from '../../store/useJobStore';
-import { useEvidenceStore } from '../../store/useEvidenceStore';
-import { useAppStore } from '../../store/useAppStore';
+// import { useEvidenceStore } from '../../store/useEvidenceStore';
+// import { useAppStore } from '../../store/useAppStore';
+import { processSellerMessage } from '../../flows/engine';
 import type { Evidence } from '../../types/evidence';
 import type { OutreachStep, OutreachChannel, StepCondition } from '../../types/outreach';
 import {
@@ -111,10 +112,10 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
   const removeStep = useOutreachStore((s) => s.removeStep);
   const addStep = useOutreachStore((s) => s.addStep);
   const updateStep = useOutreachStore((s) => s.updateStep);
-  const setJobStatus = useJobStore((s) => s.setJobStatus);
-  const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
+  // const setJobStatus = useJobStore((s) => s.setJobStatus);
+  // const setCurrentEvidence = useAppStore((s) => s.setCurrentEvidence);
   const addMessage = useJobStore((s) => s.addMessage);
-  const updateEvidence = useEvidenceStore((s) => s.updateEvidence);
+  // const updateEvidence = useEvidenceStore((s) => s.updateEvidence);
 
   const [showLeads, setShowLeads] = useState(false);
   const [addingToStepId, setAddingToStepId] = useState<string | null>(null);
@@ -172,39 +173,19 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
   }, [updateStep, jobId]);
 
   const handleGenerateDrafts = () => {
-    setJobStatus(jobId, 'RUNNING');
-    setTimeout(() => setJobStatus(jobId, 'NEEDS_INPUT'), 800);
-
+    // Save guardrails first
     if (plan) {
       setPlan(jobId, { ...plan, guardrails });
     }
-
-    const parentJobId = evidence.context?.jobId;
-    if (parentJobId) {
-      addMessage(parentJobId, {
-        id: `msg_gen_${Date.now()}`,
-        role: 'agent',
-        timestamp: new Date().toISOString(),
-        content: `Generating drafts for ${evidence.leadCount || 8} leads across ${steps.length} steps. This will take a moment...`,
-      });
-      setTimeout(() => {
-        addMessage(parentJobId, {
-          id: `msg_gen_done_${Date.now()}`,
-          role: 'agent',
-          timestamp: new Date().toISOString(),
-          content: `Done! Generated drafts for all leads. Review and approve, then I'll schedule execution.`,
-          attachments: [{ type: 'EVIDENCE_LINK', evidenceId: 'ev_outreach_drafts_01', label: 'Review drafts' }],
-        });
-      }, 1200);
-    }
-
-    updateEvidence('ev_outreach_drafts_01', {
-      subtitle: `Messages for ${evidence.leadCount || 8} leads across ${steps.length} steps.`,
+    // Route through chat so the action is visible in the conversation
+    const msg = 'Looks good, draft the messages';
+    addMessage(jobId, {
+      id: `msg_${Date.now()}`,
+      role: 'seller',
+      timestamp: new Date().toISOString(),
+      content: msg,
     });
-
-    setTimeout(() => {
-      setCurrentEvidence('ev_outreach_drafts_01');
-    }, 1400);
+    setTimeout(() => processSellerMessage(jobId, msg), 100);
   };
 
   // ── Render a tree node recursively ──
@@ -227,7 +208,7 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
             {/* Condition badge on the connector */}
             {condConfig && (
               <div className="flex items-center py-[4px]">
-                <span className={`inline-flex items-center gap-[3px] rounded-[4px] border px-[6px] py-[1px] font-body text-[10px] font-medium ${condConfig.color}`}>
+                <span className={`inline-flex items-center gap-[3px] rounded-[4px] border px-[6px] py-[1px] font-body text-[10px] font-semibold ${condConfig.color}`}>
                   {condConfig.label}
                 </span>
               </div>
@@ -320,14 +301,14 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
           <div className="flex items-stretch" style={{ paddingLeft: (depth + (isRoot ? 0 : 1)) * 24 }}>
             {!isRoot && <div className="w-[24px] shrink-0" />}
             <div className="flex-1 ml-[36px] my-[4px] rounded-[8px] border border-li-blue/30 bg-blue-50/30 p-[10px]">
-              <div className="font-body text-[11px] font-semibold text-li-text-secondary mb-[6px]">
+              <div className="font-body text-ds-small font-semibold text-li-text-secondary mb-[6px]">
                 Add step after "{step.label || config.label}"
               </div>
               <div className="flex items-center gap-[6px] flex-wrap">
                 <select
                   value={newStepCondition || ''}
                   onChange={(e) => setNewStepCondition(e.target.value as StepCondition)}
-                  className="rounded-[6px] border border-li-border-standard bg-white px-[8px] py-[4px] font-body text-[11px]"
+                  className="rounded-[6px] border border-li-border-standard bg-white px-[8px] py-[4px] font-body text-ds-small"
                 >
                   {CONDITION_OPTIONS.map(o => (
                     <option key={o.value || 'null'} value={o.value || ''}>{o.label}</option>
@@ -337,7 +318,7 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
                 <select
                   value={newStepChannel}
                   onChange={(e) => setNewStepChannel(e.target.value as OutreachChannel)}
-                  className="rounded-[6px] border border-li-border-standard bg-white px-[8px] py-[4px] font-body text-[11px]"
+                  className="rounded-[6px] border border-li-border-standard bg-white px-[8px] py-[4px] font-body text-ds-small"
                 >
                   {CHANNEL_OPTIONS.map(o => (
                     <option key={o.value} value={o.value}>{o.label}</option>
@@ -345,14 +326,14 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
                 </select>
                 <button
                   onClick={() => handleAddStep(step.id)}
-                  className="flex items-center gap-[3px] rounded-[6px] bg-li-blue px-[10px] py-[4px] font-body text-[11px] font-medium text-white hover:bg-li-blue-dark"
+                  className="flex items-center gap-[3px] rounded-[6px] bg-li-blue px-[10px] py-[4px] font-body text-ds-small font-semibold text-white hover:bg-li-blue-dark"
                 >
                   <Plus size={11} />
                   Add
                 </button>
                 <button
                   onClick={() => setAddingToStepId(null)}
-                  className="rounded-[6px] px-[8px] py-[4px] font-body text-[11px] text-li-text-tertiary hover:bg-li-bg-hover"
+                  className="rounded-[6px] px-[8px] py-[4px] font-body text-ds-small text-li-text-tertiary hover:bg-li-bg-hover"
                 >
                   Cancel
                 </button>
@@ -407,12 +388,12 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
           <div className="mt-[12px] space-y-[6px]">
             {leads.length > 0 ? leads.map((lead) => (
               <div key={lead.id} className="flex items-center gap-[8px] rounded-[6px] bg-li-bg-secondary px-[10px] py-[6px]">
-                <div className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-li-blue/10 text-[11px] font-semibold text-li-blue">
+                <div className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-li-blue/10 text-ds-small font-semibold text-li-blue">
                   {lead.fullName.split(' ').map(n => n[0]).join('')}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-body text-[12px] font-medium text-li-text-primary truncate">{lead.fullName}</div>
-                  <div className="font-body text-[11px] text-li-text-tertiary truncate">{lead.title} · {lead.company.name}</div>
+                  <div className="font-body text-ds-small font-semibold text-li-text-primary truncate">{lead.fullName}</div>
+                  <div className="font-body text-ds-small text-li-text-tertiary truncate">{lead.title} · {lead.company.name}</div>
                 </div>
                 <span className="font-body text-[10px] text-li-text-disabled">{lead.connectionDegree}</span>
               </div>
@@ -436,10 +417,10 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
         <div className="flex items-center justify-between mb-[12px]">
           <div className="flex items-center gap-[6px]">
             <GitBranch size={14} className="text-li-text-tertiary" />
-            <h4 className="font-display text-[13px] font-semibold text-li-text-primary">Outreach sequence</h4>
+            <h4 className="font-display text-ds-small font-semibold text-li-text-primary">Outreach sequence</h4>
           </div>
           <div className="flex items-center gap-[4px]">
-            <span className="font-body text-[11px] text-li-text-tertiary">
+            <span className="font-body text-ds-small text-li-text-tertiary">
               {steps.length} steps · {steps.filter(s => !s.parentStepId).length === 0 ? 1 : steps.filter(s => !s.parentStepId).length} entry
             </span>
           </div>
@@ -462,7 +443,7 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
                     label: 'Connection request',
                   });
                 }}
-                className="flex items-center gap-[4px] mx-auto rounded-[6px] bg-li-blue px-[12px] py-[6px] font-body text-[12px] font-medium text-white hover:bg-li-blue-dark"
+                className="flex items-center gap-[4px] mx-auto rounded-[6px] bg-li-blue px-[12px] py-[6px] font-body text-ds-small font-semibold text-white hover:bg-li-blue-dark"
               >
                 <Plus size={13} />
                 Add connection request
@@ -486,7 +467,7 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
       <div className="border-b border-li-border-standard px-[24px] py-[16px]">
         <div className="flex items-center gap-[6px] mb-[10px]">
           <Shield size={14} className="text-li-text-tertiary" />
-          <h4 className="font-display text-[13px] font-semibold text-li-text-primary">Guardrails</h4>
+          <h4 className="font-display text-ds-small font-semibold text-li-text-primary">Guardrails</h4>
         </div>
         <div className="space-y-[8px]">
           {[
@@ -530,13 +511,13 @@ export default function OutreachPlanBuilder({ evidence }: Props) {
 
       {/* CTA Row */}
       <div className="sticky bottom-0 flex items-center justify-end gap-[8px] border-t border-li-border-standard bg-white px-[24px] py-[12px]">
-        <button className="flex items-center gap-[6px] rounded-[8px] border border-li-border-standard px-[16px] py-[8px] font-body text-[13px] font-medium text-li-text-secondary transition-colors hover:bg-li-bg-secondary">
+        <button className="flex items-center gap-[6px] rounded-[8px] border border-li-border-standard px-[16px] py-[8px] font-body text-ds-small font-semibold text-li-text-secondary transition-colors hover:bg-li-bg-secondary">
           <Save size={14} />
           Save plan
         </button>
         <button
           onClick={handleGenerateDrafts}
-          className="flex items-center gap-[6px] rounded-[8px] bg-li-blue px-[16px] py-[8px] font-body text-[13px] font-medium text-white transition-colors hover:bg-li-blue-dark"
+          className="flex items-center gap-[6px] rounded-[8px] bg-li-blue px-[16px] py-[8px] font-body text-ds-small font-semibold text-white transition-colors hover:bg-li-blue-dark"
         >
           <Send size={14} />
           Generate drafts

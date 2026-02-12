@@ -1,5 +1,6 @@
 import type { Evidence } from '../../types/evidence';
 import Button from '../ui/Button';
+import { TERMS } from '../../constants/terms';
 import { AlertCircle, Link2, Target, Bookmark, RefreshCw } from 'lucide-react';
 
 const ACTION_ICONS = {
@@ -16,7 +17,7 @@ interface Props {
 
 export default function NeedsAttentionView({ evidence }: Props) {
   const items = evidence.attentionItems || [];
-  const reason = evidence.attentionReason || 'This job needs your input to continue.';
+  const reason = evidence.attentionReason || TERMS.PLAY_NEEDS_INPUT;
 
   return (
     <div
@@ -37,7 +38,7 @@ export default function NeedsAttentionView({ evidence }: Props) {
             <span className="font-body text-[14px] font-semibold text-li-text-primary">
               Action needed
             </span>
-            <p className="font-body text-[13px] leading-relaxed text-li-text-secondary">
+            <p className="font-body text-ds-base leading-relaxed text-li-text-secondary">
               {reason}
             </p>
           </div>
@@ -59,7 +60,7 @@ export default function NeedsAttentionView({ evidence }: Props) {
                   <span className="font-body text-[14px] font-semibold text-li-text-primary">
                     {item.label}
                   </span>
-                  <span className="font-body text-[13px] text-li-text-tertiary">
+                  <span className="font-body text-ds-small text-li-text-tertiary">
                     {item.description}
                   </span>
                 </div>

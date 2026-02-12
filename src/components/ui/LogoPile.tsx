@@ -30,14 +30,14 @@ export default function LogoPile({ items, max = 4, size = 'sm' }: Props) {
 
   const dim = size === 'sm' ? 28 : 34;
   const overlap = size === 'sm' ? -6 : -8;
-  const textSize = size === 'sm' ? 'text-[11px]' : 'text-[13px]';
+  const textSize = size === 'sm' ? 'text-ds-small' : 'text-ds-base';
   return (
     <div className="flex items-center" style={{ paddingLeft: Math.abs(overlap) }}>
       {visible.map((item, i) => (
         <div
           key={item.id}
           className={clsx(
-            'relative flex items-center justify-center rounded-full border-2 border-white font-body font-bold text-white',
+            'relative flex items-center justify-center rounded-full border-2 border-white font-body font-semibold text-white',
             textSize,
           )}
           style={{

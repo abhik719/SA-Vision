@@ -1,6 +1,16 @@
 /* ===== LinkedIn Font Faces ===== */
 
-/* Community (standard weight set) */
+/*
+ * Community ships three weights: Light 300, Regular 400, Semibold 600.
+ * We declare extra @font-face rules for weights 500, 700, 800, 900 so
+ * the browser never synthesises (faux-bolds) when Tailwind utilities
+ * like font-medium (500) or font-bold (700) are used.
+ *
+ * Mapping: 100-300 → Light, 400-500 → Regular, 600-900 → Semibold.
+ * This matches the real Sales Navigator behaviour.
+ */
+
+/* ── Light (300) ─────────────────────────────────── */
 @font-face {
   font-family: 'Community';
   src: url('/fonts/Community-Light.otf') format('opentype');
@@ -17,6 +27,7 @@
   font-display: swap;
 }
 
+/* ── Regular (400) ───────────────────────────────── */
 @font-face {
   font-family: 'Community';
   src: url('/fonts/Community-Regular.otf') format('opentype');
@@ -33,6 +44,24 @@
   font-display: swap;
 }
 
+/* ── Medium (500) → Regular file ─────────────────── */
+@font-face {
+  font-family: 'Community';
+  src: url('/fonts/Community-Regular.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Community';
+  src: url('/fonts/Community-Italic.otf') format('opentype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ── Semibold (600) ──────────────────────────────── */
 @font-face {
   font-family: 'Community';
   src: url('/fonts/Community-Semibold.otf') format('opentype');
@@ -49,7 +78,41 @@
   font-display: swap;
 }
 
-/* Community Pro (bold) */
+/* ── Bold (700) → Semibold file ──────────────────── */
+@font-face {
+  font-family: 'Community';
+  src: url('/fonts/Community-Semibold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Community';
+  src: url('/fonts/Community-SemiboldItalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ── Extra-bold / Black (800-900) → Semibold file ── */
+@font-face {
+  font-family: 'Community';
+  src: url('/fonts/Community-Semibold.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Community';
+  src: url('/fonts/Community-Semibold.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── Community Pro (bold display) ────────────────── */
 @font-face {
   font-family: 'Community Pro';
   src: url('/fonts/CommunityPro-Bold.otf') format('opentype');

@@ -19,7 +19,7 @@ export default function EvidenceBreadcrumb({ contextLabel }: Props) {
           Agent home
         </button>
         <ChevronRight size={10} className="text-li-text-disabled" />
-        <span className="max-w-[280px] truncate font-body text-[12px] font-medium text-li-text-secondary">
+        <span className="max-w-[280px] truncate font-body text-ds-small font-semibold text-li-text-secondary">
           {contextLabel}
         </span>
       </div>

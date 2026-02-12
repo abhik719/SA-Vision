@@ -1,5 +1,6 @@
 import { Pin, Download, ExternalLink, MessageSquare } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { TERMS } from '../../constants/terms';
 import { useJobStore } from '../../store/useJobStore';
 import StatusPill from '../ui/StatusPill';
 import type { Job } from '../../types/job';
@@ -72,7 +73,7 @@ export default function EvidenceJobHeader({ job }: Props) {
             onClick={handleGoToParent}
             className="flex items-center gap-[4px] font-body text-[12px] text-li-text-tertiary transition-colors hover:text-li-blue hover:underline"
           >
-            Created from: {parentJob.title}
+            {TERMS.CREATED_FROM}: {parentJob.title}
           </button>
         )}
 
@@ -89,7 +90,7 @@ export default function EvidenceJobHeader({ job }: Props) {
         {parentJob && (
           <button
             onClick={handleGoToParent}
-            className="ml-auto flex items-center gap-[4px] rounded-[4px] px-[8px] py-[3px] font-body text-[12px] font-medium text-li-text-tertiary transition-colors hover:bg-li-bg-hover hover:text-li-blue"
+            className="ml-auto flex items-center gap-[4px] rounded-[4px] px-[8px] py-[3px] font-body text-ds-small font-semibold text-li-text-tertiary transition-colors hover:bg-li-bg-hover hover:text-li-blue"
           >
             <MessageSquare size={12} />
             Open conversation

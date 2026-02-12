@@ -11,7 +11,7 @@ export default function DecisionChips({ chips }: Props) {
       {chips.map((chip, i) => (
         <span
           key={i}
-          className="rounded-ds-spotlight bg-[#DDE7F1] px-[8px] py-[2px] font-body text-ds-small font-medium text-li-blue"
+          className="rounded-ds-spotlight bg-[#DDE7F1] px-[8px] py-[2px] font-body text-ds-small font-semibold text-li-blue"
         >
           {chip}
         </span>

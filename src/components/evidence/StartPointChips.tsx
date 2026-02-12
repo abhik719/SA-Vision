@@ -14,7 +14,7 @@ export default function StartPointChips({ chips }: Props) {
         <button
           key={chip.id}
           onClick={() => createFromPrompt(chip.seedPrompt)}
-          className="rounded-ds-spotlight border border-li-border-standard px-[10px] py-[3px] font-body text-[11px] text-li-text-tertiary transition-colors hover:bg-li-bg-hover hover:text-li-text-secondary"
+          className="rounded-ds-spotlight border border-li-border-standard px-[10px] py-[3px] font-body text-ds-small text-li-text-tertiary transition-colors hover:bg-li-bg-hover hover:text-li-text-secondary"
         >
           {chip.label}
         </button>

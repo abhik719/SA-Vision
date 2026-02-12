@@ -79,7 +79,7 @@ export const useJobStore = create<JobState>()(
           kind: params.kind,
           type: params.type,
           title: params.title,
-          status: params.status || 'COMPLETED',
+          status: params.status || 'NEW',
           has_unread_results: params.has_unread_results ?? false,
           createdAt: now,
           updatedAt: now,
