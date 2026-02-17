@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
-const MIN_LEFT = 280;
+const DEFAULT_LEFT = 420;
+const MIN_LEFT = 340;
 const MIN_RIGHT = 520;
 const STORAGE_KEY = 'sa-split-width';
 
@@ -14,7 +15,7 @@ export default function ResizableSplit({ left, right }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [leftWidth, setLeftWidth] = useState<number>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? parseInt(stored, 10) : 380;
+    return stored ? parseInt(stored, 10) : DEFAULT_LEFT;
   });
   const dragging = useRef(false);
 

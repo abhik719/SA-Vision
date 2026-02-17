@@ -1,5 +1,6 @@
 import TopNav from './components/layout/TopNav';
 import ResizableSplit from './components/layout/ResizableSplit';
+import GlobalToast from './components/layout/GlobalToast';
 import { AgentLeftRail } from './components/control-plane/AgentLeftRail';
 import EvidencePane from './components/evidence/EvidencePane';
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow';
@@ -106,6 +107,7 @@ export default function App() {
         <div className="flex-1 overflow-hidden">
           <OnboardingFlow />
         </div>
+        <GlobalToast />
       </div>
     );
   }
@@ -116,6 +118,7 @@ export default function App() {
       <div className="flex-1 overflow-hidden">
         <ResizableSplit left={<AgentLeftRail />} right={<EvidencePane />} />
       </div>
+      <GlobalToast />
     </div>
   );
 }

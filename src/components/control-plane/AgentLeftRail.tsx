@@ -200,7 +200,7 @@ export function AgentLeftRail() {
 
   if (selectedJob) {
     return (
-      <div className="flex h-full shrink-0 flex-col overflow-hidden bg-white" style={{ width: 411 }}>
+      <div className="flex h-full w-full shrink-0 flex-col overflow-hidden bg-white">
         {/* Header with back button */}
         <div className="flex shrink-0 items-center gap-[8px] border-b px-[12px] py-[10px]" style={{ borderColor: 'var(--border-standard)' }}>
           <button
@@ -238,7 +238,7 @@ export function AgentLeftRail() {
   // ─── List View (no job selected) ───────────────────────
 
   return (
-    <div className="flex h-full shrink-0 flex-col overflow-hidden bg-white" style={{ width: 411 }}>
+    <div className="flex h-full w-full shrink-0 flex-col overflow-hidden bg-white">
       {/* Header */}
       <div className="flex shrink-0 flex-col gap-[6px] px-[12px] py-[10px]" style={{ borderBottom: '1px solid var(--border-standard)' }}>
         {/* Title row: "Your Plays" left, Home icon right */}

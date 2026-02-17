@@ -1914,7 +1914,7 @@ function flowSequenceShortenWait(jobId: string) {
 function flowPlayApproveAndSchedule(jobId: string) {
   const { setJobStatus } = useJobStore.getState();
   const { approveAllDrafts } = useOutreachStore.getState();
-  const { goHome, setCurrentEvidence: setCurrentEv } = useAppStore.getState();
+  const { goHome, setCurrentEvidence: setCurrentEv, showToast } = useAppStore.getState();
 
   // Approve all drafts in the store
   approveAllDrafts();
@@ -1954,9 +1954,14 @@ function flowPlayApproveAndSchedule(jobId: string) {
       }));
     }
 
-    // Navigate to home — don't show execution monitor
+    // Navigate home and show a brief acknowledgement toast
     goHome();
     setCurrentEv('ev_home');
+    showToast(
+      'Play scheduled successfully',
+      `${draftCount} drafts queued — outreach starts shortly`,
+      2500
+    );
   }, 2000);
 }
 
