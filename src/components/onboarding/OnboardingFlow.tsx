@@ -160,7 +160,7 @@ function MissionCard({
       transition={{ duration: 0.18, ease: 'easeOut' }}
       className="group relative w-full overflow-hidden rounded-[14px] border bg-white text-left outline-none"
       style={{
-        padding: 14,
+        padding: 16,
         cursor: starting || disabled ? 'default' : 'pointer',
         borderColor: 'rgba(0,0,0,0.08)',
       }}
@@ -180,23 +180,23 @@ function MissionCard({
         <div className="flex items-center gap-[10px]">
           {/* Text */}
           <div className="flex flex-1 flex-col">
-            <span className="font-body text-[15px] font-semibold text-li-text-primary leading-snug">
+            <span className="font-body text-[17px] font-semibold text-li-text-primary leading-snug">
               {intent.label}
             </span>
-            <span className="font-body text-[13px] text-li-text-tertiary">
+            <span className="font-body text-[14px] text-li-text-tertiary">
               {intent.helper}
             </span>
           </div>
 
           {/* Right CTA */}
-          <div className="flex shrink-0 items-center gap-[6px] self-center font-body text-[13px] font-semibold">
+          <div className="flex shrink-0 items-center gap-[6px] self-center font-body text-[14px] font-semibold">
             {starting ? (
               <span className="flex items-center gap-[6px] text-li-text-tertiary">
-                <span className="inline-block h-[14px] w-[14px] animate-spin rounded-full border-2 border-li-blue/25 border-t-li-blue" />
+                <span className="inline-block h-[15px] w-[15px] animate-spin rounded-full border-2 border-li-blue/25 border-t-li-blue" />
                 Starting\u2026
               </span>
             ) : (
-              <span className="flex items-center gap-[4px] rounded-full bg-li-blue px-[14px] py-[5px] text-[13px] font-bold tracking-wide text-white shadow-sm transition-all group-hover:shadow-md group-hover:shadow-li-blue/20">
+              <span className="flex items-center gap-[4px] rounded-full bg-li-blue px-[16px] py-[6px] text-[14px] font-bold tracking-wide text-white shadow-sm transition-all group-hover:shadow-md group-hover:shadow-li-blue/20">
                 Run
               </span>
             )}
@@ -209,11 +209,11 @@ function MissionCard({
             {intent.chips.map((c) => (
               <span
                 key={c}
-                className="rounded-full font-body text-[11px] text-li-text-secondary"
+                className="rounded-full font-body text-[12px] text-li-text-secondary"
                 style={{
                   background: 'rgba(0,0,0,0.04)',
                   border: '1px solid rgba(0,0,0,0.06)',
-                  padding: '3px 8px',
+                  padding: '3px 10px',
                 }}
               >
                 {c}
@@ -255,10 +255,10 @@ function PrefsTerritory({
   };
 
   return (
-    <div className="flex flex-col gap-[28px]">
+    <div className="flex flex-col gap-[24px]">
       {/* Step indicator + progress */}
       <div className="flex flex-col gap-[10px]">
-        <p className="font-body text-[12px] font-semibold uppercase tracking-wider text-li-text-tertiary">
+        <p className="font-body text-[13px] font-semibold uppercase tracking-wider text-li-text-tertiary">
           Step 1 of 2
         </p>
         <div className="h-[3px] w-full overflow-hidden rounded-full bg-[#e0e0e0]">
@@ -268,23 +268,23 @@ function PrefsTerritory({
 
       {/* Header */}
       <div className="flex flex-col gap-[6px]">
-        <h2 className="font-display text-[20px] font-semibold text-li-text-primary">
+        <h2 className="font-display text-[22px] font-semibold text-li-text-primary">
           Accounts in Focus
         </h2>
-        <p className="font-body text-[13px] leading-[1.5] text-li-text-tertiary">
+        <p className="font-body text-[14px] leading-[1.5] text-li-text-tertiary">
           Start with a list (synced from CRM or saved in Sales Nav) — or describe your territory: region, industry, company size, or simply paste or upload accounts.
         </p>
       </div>
 
       {/* Quick-pick chips */}
       <div className="flex flex-col gap-[10px]">
-        <span className="font-body text-[12px] font-semibold uppercase tracking-wider text-li-text-tertiary">Your lists</span>
+        <span className="font-body text-[13px] font-semibold uppercase tracking-wider text-li-text-tertiary">Your lists</span>
         <div className="flex flex-wrap gap-[6px]">
         {QUICK_TERRITORIES.map((t) => (
           <button
             key={t}
             onClick={() => setSelectedList(selectedList === t ? null : t)}
-            className={`rounded-full border px-[12px] py-[5px] font-body text-[12px] transition-colors ${
+            className={`rounded-full border px-[14px] py-[6px] font-body text-[13px] transition-colors ${
               selectedList === t
                 ? 'border-li-blue bg-[#f0f7ff] text-li-blue'
                 : 'border-li-border-standard text-li-text-secondary hover:border-li-blue hover:text-li-blue'
@@ -298,7 +298,7 @@ function PrefsTerritory({
 
       {/* Text input with send + upload */}
       <div className="flex flex-col gap-[10px]">
-        <span className="font-body text-[12px] font-semibold uppercase tracking-wider text-li-text-tertiary">Describe your territory</span>
+        <span className="font-body text-[13px] font-semibold uppercase tracking-wider text-li-text-tertiary">Describe your territory</span>
       <div className="relative flex items-center gap-[8px]">
         <input
           ref={inputRef}
@@ -306,7 +306,7 @@ function PrefsTerritory({
           value={territory}
           onChange={(e) => setTerritory(e.target.value)}
           placeholder="e.g. West Coast SMB, SaaS companies 50-200 employees"
-          className="flex-1 rounded-[10px] border border-li-border-standard bg-white py-[10px] pl-[14px] pr-[72px] font-body text-[14px] text-li-text-primary placeholder:text-li-text-disabled focus:border-li-blue focus:outline-none"
+          className="flex-1 rounded-[10px] border border-li-border-standard bg-white py-[10px] pl-[14px] pr-[72px] font-body text-[15px] text-li-text-primary placeholder:text-li-text-disabled focus:border-li-blue focus:outline-none"
         />
         <div className="absolute right-[8px] flex items-center gap-[4px]">
           <button
@@ -335,14 +335,14 @@ function PrefsTerritory({
       <div className="flex items-center gap-[12px] pt-[8px]">
         <button
           onClick={onBack}
-          className="flex items-center gap-[4px] rounded-[8px] px-[14px] py-[10px] font-body text-[13px] font-medium text-li-text-tertiary transition-colors hover:bg-[#f5f5f5]"
+          className="flex items-center gap-[4px] rounded-[8px] px-[14px] py-[10px] font-body text-[14px] font-medium text-li-text-tertiary transition-colors hover:bg-[#f5f5f5]"
         >
-          <ArrowLeft size={14} /> Back
+          <ArrowLeft size={15} /> Back
         </button>
         <button
           onClick={handleContinue}
           disabled={!canContinue}
-          className="flex-1 rounded-[8px] bg-li-blue py-[12px] font-body text-[14px] font-semibold text-white transition-colors hover:bg-li-blue-dark disabled:opacity-40"
+          className="flex-1 rounded-[8px] bg-li-blue py-[12px] font-body text-[15px] font-semibold text-white transition-colors hover:bg-li-blue-dark disabled:opacity-40"
         >
           Continue
         </button>
@@ -379,9 +379,9 @@ function PrefsObjective({
   const canContinue = selectedObjectives.length > 0 || customObjective.trim().length > 0;
 
   return (
-    <div className="flex flex-col gap-[20px]">
+    <div className="flex flex-col gap-[18px]">
       {/* Step indicator */}
-      <p className="font-body text-[12px] font-semibold uppercase tracking-wider text-li-text-tertiary">
+      <p className="font-body text-[13px] font-semibold uppercase tracking-wider text-li-text-tertiary">
         Step 2 of 2
       </p>
 
@@ -392,17 +392,17 @@ function PrefsObjective({
 
       {/* Header */}
       <div className="flex flex-col gap-[4px]">
-        <h2 className="font-display text-[20px] font-semibold text-li-text-primary">
+        <h2 className="font-display text-[22px] font-semibold text-li-text-primary">
           Personalize your agentic experience
         </h2>
-        <p className="font-body text-[13px] text-li-text-tertiary">
+        <p className="font-body text-[14px] text-li-text-tertiary">
           This helps your agent prioritize the right signals and leads.
         </p>
       </div>
 
       {/* Objectives */}
       <div className="flex flex-col gap-[8px]">
-        <label className="font-body text-[13px] font-semibold uppercase tracking-wider text-li-text-primary">
+        <label className="font-body text-[14px] font-semibold uppercase tracking-wider text-li-text-primary">
           Objectives
         </label>
         <div className="flex flex-wrap gap-[6px]">
@@ -412,7 +412,7 @@ function PrefsObjective({
               <button
                 key={o.id}
                 onClick={() => toggleObjective(o.id)}
-                className={`flex items-center gap-[4px] rounded-full border px-[12px] py-[5px] font-body text-[12px] transition-colors ${
+                className={`flex items-center gap-[4px] rounded-full border px-[14px] py-[6px] font-body text-[13px] transition-colors ${
                   active
                     ? 'border-li-blue bg-[#f0f7ff] text-li-blue'
                     : 'border-li-border-standard text-li-text-secondary hover:border-li-blue hover:text-li-blue'
@@ -430,37 +430,37 @@ function PrefsObjective({
           value={customObjective}
           onChange={(e) => setCustomObjective(e.target.value)}
           placeholder="Or describe your objective in your own words..."
-          className="rounded-[10px] border border-li-border-standard bg-white px-[14px] py-[9px] font-body text-[13px] text-li-text-primary placeholder:text-li-text-disabled focus:border-li-blue focus:outline-none"
+          className="rounded-[10px] border border-li-border-standard bg-white px-[14px] py-[10px] font-body text-[14px] text-li-text-primary placeholder:text-li-text-disabled focus:border-li-blue focus:outline-none"
         />
       </div>
 
       {/* About your role */}
       <div className="flex flex-col gap-[4px]">
-        <label className="font-body text-[13px] font-semibold uppercase tracking-wider text-li-text-primary">
+        <label className="font-body text-[14px] font-semibold uppercase tracking-wider text-li-text-primary">
           About your role
-          <span className="ml-[6px] text-[11px] font-normal normal-case text-li-text-tertiary">optional</span>
+          <span className="ml-[6px] text-[12px] font-normal normal-case text-li-text-tertiary">optional</span>
         </label>
         <textarea
           value={roleNotes}
           onChange={(e) => setRoleNotes(e.target.value)}
           placeholder="e.g. I manage West Coast mid-market accounts, quota $2M/year, team of 3 SDRs..."
           rows={2}
-          className="resize-none rounded-[10px] border border-li-border-standard bg-white px-[14px] py-[9px] font-body text-[13px] text-li-text-primary placeholder:text-li-text-disabled focus:border-li-blue focus:outline-none"
+          className="resize-none rounded-[10px] border border-li-border-standard bg-white px-[14px] py-[10px] font-body text-[14px] text-li-text-primary placeholder:text-li-text-disabled focus:border-li-blue focus:outline-none"
         />
       </div>
 
       {/* Work preferences */}
       <div className="flex flex-col gap-[4px]">
-        <label className="font-body text-[13px] font-semibold uppercase tracking-wider text-li-text-primary">
+        <label className="font-body text-[14px] font-semibold uppercase tracking-wider text-li-text-primary">
           Work preferences
-          <span className="ml-[6px] text-[11px] font-normal normal-case text-li-text-tertiary">optional</span>
+          <span className="ml-[6px] text-[12px] font-normal normal-case text-li-text-tertiary">optional</span>
         </label>
         <textarea
           value={workPrefs}
           onChange={(e) => setWorkPrefs(e.target.value)}
           placeholder="e.g. I prospect 2-3 times a week, prefer LinkedIn InMail over email, keep messages short..."
           rows={2}
-          className="resize-none rounded-[10px] border border-li-border-standard bg-white px-[14px] py-[9px] font-body text-[13px] text-li-text-primary placeholder:text-li-text-disabled focus:border-li-blue focus:outline-none"
+          className="resize-none rounded-[10px] border border-li-border-standard bg-white px-[14px] py-[10px] font-body text-[14px] text-li-text-primary placeholder:text-li-text-disabled focus:border-li-blue focus:outline-none"
         />
       </div>
 
@@ -468,14 +468,14 @@ function PrefsObjective({
       <div className="flex items-center gap-[12px] pt-[4px]">
         <button
           onClick={onBack}
-          className="flex items-center gap-[4px] rounded-[8px] px-[14px] py-[10px] font-body text-[13px] font-medium text-li-text-tertiary transition-colors hover:bg-[#f5f5f5]"
+          className="flex items-center gap-[4px] rounded-[8px] px-[14px] py-[10px] font-body text-[14px] font-medium text-li-text-tertiary transition-colors hover:bg-[#f5f5f5]"
         >
-          <ArrowLeft size={14} /> Back
+          <ArrowLeft size={15} /> Back
         </button>
         <button
           onClick={onFinish}
           disabled={!canContinue}
-          className="flex-1 rounded-[8px] bg-li-blue py-[12px] font-body text-[14px] font-semibold text-white transition-colors hover:bg-li-blue-dark disabled:opacity-40"
+          className="flex-1 rounded-[8px] bg-li-blue py-[12px] font-body text-[15px] font-semibold text-white transition-colors hover:bg-li-blue-dark disabled:opacity-40"
         >
           Create my first Play
         </button>
@@ -685,13 +685,13 @@ export function OnboardingFlow() {
 
   return (
     <div className="flex h-full w-full items-center justify-center overflow-auto bg-gradient-to-br from-[#f8f9fa] to-[#e9ecef] py-[24px]">
-      <div className="flex w-full max-w-[520px] flex-col gap-[24px] rounded-[12px] bg-white p-[40px] shadow-lg">
+      <div className="flex w-full max-w-[580px] flex-col gap-[20px] rounded-[12px] bg-white p-[40px] shadow-lg">
 
         {/* Logo + title — only on starter screen */}
         {mode === 'starter' && (
           <div className="flex items-center gap-[16px]">
-            <img src={inlogoPng} alt="LinkedIn" className="h-[28px] w-auto" />
-            <h1 className="font-display text-[24px] font-semibold leading-tight text-li-text-primary">
+            <img src={inlogoPng} alt="LinkedIn" className="h-[36px] w-auto" />
+            <h1 className="font-display text-[28px] font-semibold leading-tight text-li-text-primary">
               Your agent, made for prospecting
             </h1>
           </div>
@@ -699,15 +699,15 @@ export function OnboardingFlow() {
 
         {/* Subtitle — only on starter */}
         {mode === 'starter' && (
-          <div className="-mt-[12px] flex flex-col gap-[8px]">
-            <p className="font-body text-[15px] leading-[1.6] text-li-text-secondary">
+          <div className="-mt-[8px] flex flex-col gap-[6px]">
+            <p className="font-body text-[16px] leading-[1.6] text-li-text-secondary">
               Built on signals + Network Intelligence.
             </p>
-            <p className="font-body text-[15px] leading-[1.6] text-li-text-secondary">
+            <p className="font-body text-[16px] leading-[1.6] text-li-text-secondary">
               Prioritizes accounts, finds leads, and orchestrates outreach.
             </p>
-            <p className="font-body text-[15px] leading-[1.6] text-li-text-secondary">
-              You're in control. Nothing sends without your approval.
+            <p className="font-body text-[16px] leading-[1.6] text-li-text-secondary">
+              You&apos;re in control. Nothing sends without your approval.
             </p>
           </div>
         )}
@@ -720,12 +720,12 @@ export function OnboardingFlow() {
           <div className="flex flex-col gap-[14px]">
             <div className="flex flex-col gap-[4px]">
               <div className="flex items-center gap-[6px]">
-                <Zap size={15} className="text-li-blue" />
-                <h2 className="font-display text-[18px] font-semibold text-li-text-primary">
+                <Zap size={17} className="text-li-blue" />
+                <h2 className="font-display text-[20px] font-semibold text-li-text-primary">
                   Run your first <span className="text-li-blue">Play</span>
                 </h2>
               </div>
-              <p className="font-body text-[13px] text-li-text-tertiary">
+              <p className="font-body text-[14px] text-li-text-tertiary">
                 Pick a quick starting point, you can tailor it in chat.
               </p>
             </div>
@@ -751,7 +751,7 @@ export function OnboardingFlow() {
 
             <button
               onClick={() => setMode('prefs_territory')}
-              className="self-center font-body text-[13px] font-medium text-li-text-tertiary transition-colors hover:text-li-blue"
+              className="self-center font-body text-[14px] font-medium text-li-text-tertiary transition-colors hover:text-li-blue"
             >
               I&apos;ll share my preferences instead
             </button>
